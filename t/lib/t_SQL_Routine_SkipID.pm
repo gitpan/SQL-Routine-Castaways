@@ -106,28 +106,28 @@ sub create_and_populate_model {
 				'rhs_src_col' => 'person_id',  } },
 		] },
 		( map { { 'NODE_TYPE' => 'view_expr', 'ATTRS' => $_ } } (
-			{ 'view_part' => 'RESULT', 'view_col' => 'self_id'    , 'expr_type' => 'COL', 'src_col' => ['person_id','self'], },
-			{ 'view_part' => 'RESULT', 'view_col' => 'self_name'  , 'expr_type' => 'COL', 'src_col' => ['name'     ,'self'], },
-			{ 'view_part' => 'RESULT', 'view_col' => 'father_id'  , 'expr_type' => 'COL', 'src_col' => ['person_id','father'], },
-			{ 'view_part' => 'RESULT', 'view_col' => 'father_name', 'expr_type' => 'COL', 'src_col' => ['name'     ,'father'], },
-			{ 'view_part' => 'RESULT', 'view_col' => 'mother_id'  , 'expr_type' => 'COL', 'src_col' => ['person_id','mother'], },
-			{ 'view_part' => 'RESULT', 'view_col' => 'mother_name', 'expr_type' => 'COL', 'src_col' => ['name'     ,'mother'], },
+			{ 'view_part' => 'RESULT', 'set_result_col' => 'self_id'    , 'cont_type' => 'SCALAR', 'valf_src_col' => ['person_id','self'], },
+			{ 'view_part' => 'RESULT', 'set_result_col' => 'self_name'  , 'cont_type' => 'SCALAR', 'valf_src_col' => ['name'     ,'self'], },
+			{ 'view_part' => 'RESULT', 'set_result_col' => 'father_id'  , 'cont_type' => 'SCALAR', 'valf_src_col' => ['person_id','father'], },
+			{ 'view_part' => 'RESULT', 'set_result_col' => 'father_name', 'cont_type' => 'SCALAR', 'valf_src_col' => ['name'     ,'father'], },
+			{ 'view_part' => 'RESULT', 'set_result_col' => 'mother_id'  , 'cont_type' => 'SCALAR', 'valf_src_col' => ['person_id','mother'], },
+			{ 'view_part' => 'RESULT', 'set_result_col' => 'mother_name', 'cont_type' => 'SCALAR', 'valf_src_col' => ['name'     ,'mother'], },
 		) ),
 		{ 'NODE_TYPE' => 'view_expr', 'ATTRS' => { 'view_part' => 'WHERE', 
-				'expr_type' => 'SFUNC', 'call_sfunc' => 'AND', }, 'CHILDREN' => [ 
+				'cont_type' => 'SCALAR', 'valf_call_sroutine' => 'AND', }, 'CHILDREN' => [ 
 			{ 'NODE_TYPE' => 'view_expr', 'ATTRS' => { 
-					'expr_type' => 'SFUNC', 'call_sfunc' => 'LIKE', }, 'CHILDREN' => [ 
+					'cont_type' => 'SCALAR', 'valf_call_sroutine' => 'LIKE', }, 'CHILDREN' => [ 
 				{ 'NODE_TYPE' => 'view_expr', 'ATTRS' => { 
-					'expr_type' => 'COL', 'src_col' => ['name','father'], }, },
+					'cont_type' => 'SCALAR', 'valf_src_col' => ['name','father'], }, },
 #				{ 'NODE_TYPE' => 'view_expr', 'ATTRS' => { 
-#					'expr_type' => 'ARG', 'routine_arg' => 'srchw_fa', }, },
+#					'cont_type' => 'SCALAR', 'routine_arg' => 'srchw_fa', }, },
 			] },
 			{ 'NODE_TYPE' => 'view_expr', 'ATTRS' => { 
-					'expr_type' => 'SFUNC', 'call_sfunc' => 'LIKE', }, 'CHILDREN' => [ 
+					'cont_type' => 'SCALAR', 'valf_call_sroutine' => 'LIKE', }, 'CHILDREN' => [ 
 				{ 'NODE_TYPE' => 'view_expr', 'ATTRS' => { 
-					'expr_type' => 'COL', 'src_col' => ['name','mother'], }, },
+					'cont_type' => 'SCALAR', 'valf_src_col' => ['name','mother'], }, },
 #				{ 'NODE_TYPE' => 'view_expr', 'ATTRS' => { 
-#					'expr_type' => 'ARG', 'routine_arg' => 'srchw_mo', }, },
+#					'cont_type' => 'SCALAR', 'routine_arg' => 'srchw_mo', }, },
 			] },
 		] },
 	] } );
@@ -216,28 +216,28 @@ sub create_and_populate_model {
 				'rhs_src_col' => 'user_id',  } },
 		] },
 		( map { { 'NODE_TYPE' => 'view_expr', 'ATTRS' => $_ } } (
-			{ 'view_part' => 'RESULT', 'view_col' => 'user_id'      , 'expr_type' => 'COL', 'src_col' => ['user_id'      ,'user_auth'   ], },
-			{ 'view_part' => 'RESULT', 'view_col' => 'login_name'   , 'expr_type' => 'COL', 'src_col' => ['login_name'   ,'user_auth'   ], },
-			{ 'view_part' => 'RESULT', 'view_col' => 'login_pass'   , 'expr_type' => 'COL', 'src_col' => ['login_pass'   ,'user_auth'   ], },
-			{ 'view_part' => 'RESULT', 'view_col' => 'private_name' , 'expr_type' => 'COL', 'src_col' => ['private_name' ,'user_auth'   ], },
-			{ 'view_part' => 'RESULT', 'view_col' => 'private_email', 'expr_type' => 'COL', 'src_col' => ['private_email','user_auth'   ], },
-			{ 'view_part' => 'RESULT', 'view_col' => 'may_login'    , 'expr_type' => 'COL', 'src_col' => ['may_login'    ,'user_auth'   ], },
-			{ 'view_part' => 'RESULT', 'view_col' => 'max_sessions' , 'expr_type' => 'COL', 'src_col' => ['max_sessions' ,'user_auth'   ], },
-			{ 'view_part' => 'RESULT', 'view_col' => 'public_name'  , 'expr_type' => 'COL', 'src_col' => ['public_name'  ,'user_profile'], },
-			{ 'view_part' => 'RESULT', 'view_col' => 'public_email' , 'expr_type' => 'COL', 'src_col' => ['public_email' ,'user_profile'], },
-			{ 'view_part' => 'RESULT', 'view_col' => 'web_url'      , 'expr_type' => 'COL', 'src_col' => ['web_url'      ,'user_profile'], },
-			{ 'view_part' => 'RESULT', 'view_col' => 'contact_net'  , 'expr_type' => 'COL', 'src_col' => ['contact_net'  ,'user_profile'], },
-			{ 'view_part' => 'RESULT', 'view_col' => 'contact_phy'  , 'expr_type' => 'COL', 'src_col' => ['contact_phy'  ,'user_profile'], },
-			{ 'view_part' => 'RESULT', 'view_col' => 'bio'          , 'expr_type' => 'COL', 'src_col' => ['bio'          ,'user_profile'], },
-			{ 'view_part' => 'RESULT', 'view_col' => 'plan'         , 'expr_type' => 'COL', 'src_col' => ['plan'         ,'user_profile'], },
-			{ 'view_part' => 'RESULT', 'view_col' => 'comments'     , 'expr_type' => 'COL', 'src_col' => ['comments'     ,'user_profile'], },
+			{ 'view_part' => 'RESULT', 'set_result_col' => 'user_id'      , 'cont_type' => 'SCALAR', 'valf_src_col' => ['user_id'      ,'user_auth'   ], },
+			{ 'view_part' => 'RESULT', 'set_result_col' => 'login_name'   , 'cont_type' => 'SCALAR', 'valf_src_col' => ['login_name'   ,'user_auth'   ], },
+			{ 'view_part' => 'RESULT', 'set_result_col' => 'login_pass'   , 'cont_type' => 'SCALAR', 'valf_src_col' => ['login_pass'   ,'user_auth'   ], },
+			{ 'view_part' => 'RESULT', 'set_result_col' => 'private_name' , 'cont_type' => 'SCALAR', 'valf_src_col' => ['private_name' ,'user_auth'   ], },
+			{ 'view_part' => 'RESULT', 'set_result_col' => 'private_email', 'cont_type' => 'SCALAR', 'valf_src_col' => ['private_email','user_auth'   ], },
+			{ 'view_part' => 'RESULT', 'set_result_col' => 'may_login'    , 'cont_type' => 'SCALAR', 'valf_src_col' => ['may_login'    ,'user_auth'   ], },
+			{ 'view_part' => 'RESULT', 'set_result_col' => 'max_sessions' , 'cont_type' => 'SCALAR', 'valf_src_col' => ['max_sessions' ,'user_auth'   ], },
+			{ 'view_part' => 'RESULT', 'set_result_col' => 'public_name'  , 'cont_type' => 'SCALAR', 'valf_src_col' => ['public_name'  ,'user_profile'], },
+			{ 'view_part' => 'RESULT', 'set_result_col' => 'public_email' , 'cont_type' => 'SCALAR', 'valf_src_col' => ['public_email' ,'user_profile'], },
+			{ 'view_part' => 'RESULT', 'set_result_col' => 'web_url'      , 'cont_type' => 'SCALAR', 'valf_src_col' => ['web_url'      ,'user_profile'], },
+			{ 'view_part' => 'RESULT', 'set_result_col' => 'contact_net'  , 'cont_type' => 'SCALAR', 'valf_src_col' => ['contact_net'  ,'user_profile'], },
+			{ 'view_part' => 'RESULT', 'set_result_col' => 'contact_phy'  , 'cont_type' => 'SCALAR', 'valf_src_col' => ['contact_phy'  ,'user_profile'], },
+			{ 'view_part' => 'RESULT', 'set_result_col' => 'bio'          , 'cont_type' => 'SCALAR', 'valf_src_col' => ['bio'          ,'user_profile'], },
+			{ 'view_part' => 'RESULT', 'set_result_col' => 'plan'         , 'cont_type' => 'SCALAR', 'valf_src_col' => ['plan'         ,'user_profile'], },
+			{ 'view_part' => 'RESULT', 'set_result_col' => 'comments'     , 'cont_type' => 'SCALAR', 'valf_src_col' => ['comments'     ,'user_profile'], },
 		) ),
 		{ 'NODE_TYPE' => 'view_expr', 'ATTRS' => { 'view_part' => 'WHERE', 
-				'expr_type' => 'SFUNC', 'call_sfunc' => 'EQ', }, 'CHILDREN' => [ 
+				'cont_type' => 'SCALAR', 'valf_call_sroutine' => 'EQ', }, 'CHILDREN' => [ 
 			{ 'NODE_TYPE' => 'view_expr', 'ATTRS' => { 
-				'expr_type' => 'COL', 'src_col' => ['user_id','user_auth'], }, },
+				'cont_type' => 'SCALAR', 'valf_src_col' => ['user_id','user_auth'], }, },
 #			{ 'NODE_TYPE' => 'view_expr', 'ATTRS' => { 
-#				'expr_type' => 'ARG', 'routine_arg' => 'curr_uid', }, },
+#				'cont_type' => 'SCALAR', 'routine_arg' => 'curr_uid', }, },
 		] },
 	] } );
 
@@ -267,27 +267,27 @@ sub create_and_populate_model {
 			'CHILDREN' => [ map { { 'NODE_TYPE' => 'view_src_col', 'ATTRS' => $_ } } qw( pref_name pref_value ) ] 
 		},
 		{ 'NODE_TYPE' => 'view_expr', 'ATTRS' => { 'view_part' => 'RESULT', 
-			'view_col' => 'theme_name', 'expr_type' => 'COL', 'src_col' => ['pref_value','user_pref'], }, },
+			'set_result_col' => 'theme_name', 'cont_type' => 'SCALAR', 'valf_src_col' => ['pref_value','user_pref'], }, },
 		{ 'NODE_TYPE' => 'view_expr', 'ATTRS' => { 'view_part' => 'RESULT', 
-				'view_col' => 'theme_count', 'expr_type' => 'SFUNC', 'call_sfunc' => 'COUNT', }, 'CHILDREN' => [ 
+				'set_result_col' => 'theme_count', 'cont_type' => 'SCALAR', 'valf_call_sroutine' => 'COUNT', }, 'CHILDREN' => [ 
 			{ 'NODE_TYPE' => 'view_expr', 'ATTRS' => { 
-				'expr_type' => 'COL', 'src_col' => ['pref_value','user_pref'], }, },
+				'cont_type' => 'SCALAR', 'valf_src_col' => ['pref_value','user_pref'], }, },
 		] },
 		{ 'NODE_TYPE' => 'view_expr', 'ATTRS' => { 'view_part' => 'WHERE', 
-				'expr_type' => 'SFUNC', 'call_sfunc' => 'EQ', }, 'CHILDREN' => [ 
+				'cont_type' => 'SCALAR', 'valf_call_sroutine' => 'EQ', }, 'CHILDREN' => [ 
 			{ 'NODE_TYPE' => 'view_expr', 'ATTRS' => { 
-				'expr_type' => 'COL', 'src_col' => ['pref_name','user_pref'], }, },
+				'cont_type' => 'SCALAR', 'valf_src_col' => ['pref_name','user_pref'], }, },
 			{ 'NODE_TYPE' => 'view_expr', 'ATTRS' => { 
-				'expr_type' => 'LIT', 'domain' => 'str30', 'lit_val' => 'theme', }, },
+				'cont_type' => 'SCALAR', 'domain' => 'str30', 'valf_literal' => 'theme', }, },
 		] },
 		{ 'NODE_TYPE' => 'view_expr', 'ATTRS' => { 'view_part' => 'GROUP', 
-			'expr_type' => 'COL', 'src_col' => ['pref_value','user_pref'], }, },
+			'cont_type' => 'SCALAR', 'valf_src_col' => ['pref_value','user_pref'], }, },
 		{ 'NODE_TYPE' => 'view_expr', 'ATTRS' => { 'view_part' => 'HAVING', 
-				'expr_type' => 'SFUNC', 'call_sfunc' => 'GT', }, 'CHILDREN' => [ 
+				'cont_type' => 'SCALAR', 'valf_call_sroutine' => 'GT', }, 'CHILDREN' => [ 
 			{ 'NODE_TYPE' => 'view_expr', 'ATTRS' => { 
-				'expr_type' => 'SFUNC', 'call_sfunc' => 'COUNT', }, },
+				'cont_type' => 'SCALAR', 'valf_call_sroutine' => 'COUNT', }, },
 			{ 'NODE_TYPE' => 'view_expr', 'ATTRS' => { 
-				'expr_type' => 'LIT', 'domain' => 'int', 'lit_val' => '1', }, },
+				'cont_type' => 'SCALAR', 'domain' => 'int', 'valf_literal' => '1', }, },
 		] },
 	] } );
 
@@ -299,9 +299,8 @@ sub create_and_populate_model {
 sub expected_model_xml_output {
 	return(
 '<root>
-	<elements />
 	<blueprints>
-		<catalog id="1">
+		<catalog id="1" name="The Catalog Blueprint">
 			<owner id="1" catalog="1" />
 			<schema id="1" catalog="1" name="data" owner="1">
 				<domain id="1" schema="1" name="bin1k" base_type="STR_BIT" max_octets="1000" />
@@ -351,10 +350,10 @@ sub expected_model_xml_output {
 						<table_ind_col id="4" table_ind="4" table_col="6" f_table_col="1" />
 					</table_ind>
 				</table>
-				<view id="1" view_type="MATCH" schema="1" name="person_vw" may_write="1">
+				<view id="1" schema="1" name="person_vw" view_type="MATCH" may_write="1">
 					<view_src id="1" view="1" name="person" match_table="1" />
 				</view>
-				<view id="2" view_type="MULTIPLE" schema="1" name="person_with_parents" may_write="0">
+				<view id="2" schema="1" name="person_with_parents" view_type="MULTIPLE" may_write="0">
 					<view_col id="1" view="2" name="self_id" domain="9" />
 					<view_col id="2" view="2" name="self_name" domain="24" />
 					<view_col id="3" view="2" name="father_id" domain="9" />
@@ -381,18 +380,18 @@ sub expected_model_xml_output {
 					<view_join id="2" view="2" lhs_src="2" rhs_src="4" join_type="LEFT">
 						<view_join_col id="2" join="2" lhs_src_col="4" rhs_src_col="7" />
 					</view_join>
-					<view_expr id="1" expr_type="COL" view="2" view_part="RESULT" view_col="1" src_col="1" />
-					<view_expr id="2" expr_type="COL" view="2" view_part="RESULT" view_col="2" src_col="2" />
-					<view_expr id="3" expr_type="COL" view="2" view_part="RESULT" view_col="3" src_col="5" />
-					<view_expr id="4" expr_type="COL" view="2" view_part="RESULT" view_col="4" src_col="6" />
-					<view_expr id="5" expr_type="COL" view="2" view_part="RESULT" view_col="5" src_col="7" />
-					<view_expr id="6" expr_type="COL" view="2" view_part="RESULT" view_col="6" src_col="8" />
-					<view_expr id="7" expr_type="SFUNC" view="2" view_part="WHERE" call_sfunc="AND">
-						<view_expr id="8" expr_type="SFUNC" p_expr="7" call_sfunc="LIKE">
-							<view_expr id="9" expr_type="COL" p_expr="8" src_col="6" />
+					<view_expr id="1" view="2" view_part="RESULT" set_result_col="1" cont_type="SCALAR" valf_src_col="1" />
+					<view_expr id="2" view="2" view_part="RESULT" set_result_col="2" cont_type="SCALAR" valf_src_col="2" />
+					<view_expr id="3" view="2" view_part="RESULT" set_result_col="3" cont_type="SCALAR" valf_src_col="5" />
+					<view_expr id="4" view="2" view_part="RESULT" set_result_col="4" cont_type="SCALAR" valf_src_col="6" />
+					<view_expr id="5" view="2" view_part="RESULT" set_result_col="5" cont_type="SCALAR" valf_src_col="7" />
+					<view_expr id="6" view="2" view_part="RESULT" set_result_col="6" cont_type="SCALAR" valf_src_col="8" />
+					<view_expr id="7" view="2" view_part="WHERE" cont_type="SCALAR" valf_call_sroutine="AND">
+						<view_expr id="8" p_expr="7" cont_type="SCALAR" valf_call_sroutine="LIKE">
+							<view_expr id="9" p_expr="8" cont_type="SCALAR" valf_src_col="6" />
 						</view_expr>
-						<view_expr id="10" expr_type="SFUNC" p_expr="7" call_sfunc="LIKE">
-							<view_expr id="11" expr_type="COL" p_expr="10" src_col="8" />
+						<view_expr id="10" p_expr="7" cont_type="SCALAR" valf_call_sroutine="LIKE">
+							<view_expr id="11" p_expr="10" cont_type="SCALAR" valf_src_col="8" />
 						</view_expr>
 					</view_expr>
 				</view>
@@ -434,7 +433,7 @@ sub expected_model_xml_output {
 						<table_ind_col id="10" table_ind="10" table_col="14" f_table_col="7" />
 					</table_ind>
 				</table>
-				<view id="3" view_type="MULTIPLE" schema="1" name="user" may_write="1">
+				<view id="3" schema="1" name="user" view_type="MULTIPLE" may_write="1">
 					<view_col id="7" view="3" name="user_id" domain="9" />
 					<view_col id="8" view="3" name="login_name" domain="23" />
 					<view_col id="9" view="3" name="login_pass" domain="23" />
@@ -473,23 +472,23 @@ sub expected_model_xml_output {
 					<view_join id="3" view="3" lhs_src="5" rhs_src="6" join_type="LEFT">
 						<view_join_col id="3" join="3" lhs_src_col="9" rhs_src_col="16" />
 					</view_join>
-					<view_expr id="12" expr_type="COL" view="3" view_part="RESULT" view_col="7" src_col="9" />
-					<view_expr id="13" expr_type="COL" view="3" view_part="RESULT" view_col="8" src_col="10" />
-					<view_expr id="14" expr_type="COL" view="3" view_part="RESULT" view_col="9" src_col="11" />
-					<view_expr id="15" expr_type="COL" view="3" view_part="RESULT" view_col="10" src_col="12" />
-					<view_expr id="16" expr_type="COL" view="3" view_part="RESULT" view_col="11" src_col="13" />
-					<view_expr id="17" expr_type="COL" view="3" view_part="RESULT" view_col="12" src_col="14" />
-					<view_expr id="18" expr_type="COL" view="3" view_part="RESULT" view_col="13" src_col="15" />
-					<view_expr id="19" expr_type="COL" view="3" view_part="RESULT" view_col="14" src_col="17" />
-					<view_expr id="20" expr_type="COL" view="3" view_part="RESULT" view_col="15" src_col="18" />
-					<view_expr id="21" expr_type="COL" view="3" view_part="RESULT" view_col="16" src_col="19" />
-					<view_expr id="22" expr_type="COL" view="3" view_part="RESULT" view_col="17" src_col="20" />
-					<view_expr id="23" expr_type="COL" view="3" view_part="RESULT" view_col="18" src_col="21" />
-					<view_expr id="24" expr_type="COL" view="3" view_part="RESULT" view_col="19" src_col="22" />
-					<view_expr id="25" expr_type="COL" view="3" view_part="RESULT" view_col="20" src_col="23" />
-					<view_expr id="26" expr_type="COL" view="3" view_part="RESULT" view_col="21" src_col="24" />
-					<view_expr id="27" expr_type="SFUNC" view="3" view_part="WHERE" call_sfunc="EQ">
-						<view_expr id="28" expr_type="COL" p_expr="27" src_col="9" />
+					<view_expr id="12" view="3" view_part="RESULT" set_result_col="7" cont_type="SCALAR" valf_src_col="9" />
+					<view_expr id="13" view="3" view_part="RESULT" set_result_col="8" cont_type="SCALAR" valf_src_col="10" />
+					<view_expr id="14" view="3" view_part="RESULT" set_result_col="9" cont_type="SCALAR" valf_src_col="11" />
+					<view_expr id="15" view="3" view_part="RESULT" set_result_col="10" cont_type="SCALAR" valf_src_col="12" />
+					<view_expr id="16" view="3" view_part="RESULT" set_result_col="11" cont_type="SCALAR" valf_src_col="13" />
+					<view_expr id="17" view="3" view_part="RESULT" set_result_col="12" cont_type="SCALAR" valf_src_col="14" />
+					<view_expr id="18" view="3" view_part="RESULT" set_result_col="13" cont_type="SCALAR" valf_src_col="15" />
+					<view_expr id="19" view="3" view_part="RESULT" set_result_col="14" cont_type="SCALAR" valf_src_col="17" />
+					<view_expr id="20" view="3" view_part="RESULT" set_result_col="15" cont_type="SCALAR" valf_src_col="18" />
+					<view_expr id="21" view="3" view_part="RESULT" set_result_col="16" cont_type="SCALAR" valf_src_col="19" />
+					<view_expr id="22" view="3" view_part="RESULT" set_result_col="17" cont_type="SCALAR" valf_src_col="20" />
+					<view_expr id="23" view="3" view_part="RESULT" set_result_col="18" cont_type="SCALAR" valf_src_col="21" />
+					<view_expr id="24" view="3" view_part="RESULT" set_result_col="19" cont_type="SCALAR" valf_src_col="22" />
+					<view_expr id="25" view="3" view_part="RESULT" set_result_col="20" cont_type="SCALAR" valf_src_col="23" />
+					<view_expr id="26" view="3" view_part="RESULT" set_result_col="21" cont_type="SCALAR" valf_src_col="24" />
+					<view_expr id="27" view="3" view_part="WHERE" cont_type="SCALAR" valf_call_sroutine="EQ">
+						<view_expr id="28" p_expr="27" cont_type="SCALAR" valf_src_col="9" />
 					</view_expr>
 				</view>
 				<table id="4" schema="1" name="user_pref">
@@ -504,25 +503,25 @@ sub expected_model_xml_output {
 						<table_ind_col id="13" table_ind="12" table_col="23" f_table_col="7" />
 					</table_ind>
 				</table>
-				<view id="4" view_type="SINGLE" schema="1" name="user_theme" may_write="0">
+				<view id="4" schema="1" name="user_theme" view_type="SINGLE" may_write="0">
 					<view_col id="22" view="4" name="theme_name" domain="27" />
 					<view_col id="23" view="4" name="theme_count" domain="9" />
 					<view_src id="7" view="4" name="user_pref" match_table="4">
 						<view_src_col id="25" src="7" match_table_col="24" />
 						<view_src_col id="26" src="7" match_table_col="25" />
 					</view_src>
-					<view_expr id="29" expr_type="COL" view="4" view_part="RESULT" view_col="22" src_col="26" />
-					<view_expr id="30" expr_type="SFUNC" view="4" view_part="RESULT" view_col="23" call_sfunc="COUNT">
-						<view_expr id="31" expr_type="COL" p_expr="30" src_col="26" />
+					<view_expr id="29" view="4" view_part="RESULT" set_result_col="22" cont_type="SCALAR" valf_src_col="26" />
+					<view_expr id="30" view="4" view_part="RESULT" set_result_col="23" cont_type="SCALAR" valf_call_sroutine="COUNT">
+						<view_expr id="31" p_expr="30" cont_type="SCALAR" valf_src_col="26" />
 					</view_expr>
-					<view_expr id="32" expr_type="SFUNC" view="4" view_part="WHERE" call_sfunc="EQ">
-						<view_expr id="33" expr_type="COL" p_expr="32" src_col="25" />
-						<view_expr id="34" expr_type="LIT" p_expr="32" domain="5" lit_val="theme" />
+					<view_expr id="32" view="4" view_part="WHERE" cont_type="SCALAR" valf_call_sroutine="EQ">
+						<view_expr id="33" p_expr="32" cont_type="SCALAR" valf_src_col="25" />
+						<view_expr id="34" p_expr="32" cont_type="SCALAR" valf_literal="theme" domain="5" />
 					</view_expr>
-					<view_expr id="35" expr_type="COL" view="4" view_part="GROUP" src_col="26" />
-					<view_expr id="36" expr_type="SFUNC" view="4" view_part="HAVING" call_sfunc="GT">
-						<view_expr id="37" expr_type="SFUNC" p_expr="36" call_sfunc="COUNT" />
-						<view_expr id="38" expr_type="LIT" p_expr="36" domain="9" lit_val="1" />
+					<view_expr id="35" view="4" view_part="GROUP" cont_type="SCALAR" valf_src_col="26" />
+					<view_expr id="36" view="4" view_part="HAVING" cont_type="SCALAR" valf_call_sroutine="GT">
+						<view_expr id="37" p_expr="36" cont_type="SCALAR" valf_call_sroutine="COUNT" />
+						<view_expr id="38" p_expr="36" cont_type="SCALAR" valf_literal="1" domain="9" />
 					</view_expr>
 				</view>
 			</schema>

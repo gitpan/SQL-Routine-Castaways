@@ -37,7 +37,6 @@ this:
 Then you would want to run the included test programs to make sure the modules
 are installed correctly.  Call them like this:
 
-        perl t/SQL_Routine_ByTree.t
         perl t/SQL_Routine_SkipID.t
 
 Any existing POD is embedded in the module itself.  The Makefile probably 

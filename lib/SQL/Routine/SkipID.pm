@@ -11,10 +11,10 @@ use 5.006;
 use strict;
 use warnings;
 use vars qw($VERSION);
-$VERSION = '0.31';
+$VERSION = '0.32';
 
-use Locale::KeyedText 1.00;
-use SQL::Routine 0.43;
+use Locale::KeyedText '1.00';
+use SQL::Routine '0.45';
 
 use base qw( SQL::Routine );
 
@@ -29,7 +29,7 @@ Standard Modules: I<none>
 Nonstandard Modules: 
 
 	Locale::KeyedText 1.00 (for error messages)
-	SQL::Routine 0.43 (parent class)
+	SQL::Routine 0.45 (parent class)
 
 =head1 COPYRIGHT AND LICENSE
 
@@ -80,6 +80,9 @@ my %NODE_TYPES_EXTRA_DETAILS = (
 	'catalog' => {
 		'link_search_attr' => 'name',
 		'def_attr' => 'id',
+		'attr_defaults' => {
+			'name' => ['lit','The Catalog Blueprint'],
+		},
 	},
 	'application' => {
 		'link_search_attr' => 'name',
@@ -174,10 +177,10 @@ my %NODE_TYPES_EXTRA_DETAILS = (
 	},
 	'view_expr' => {
 		'search_paths' => {
-			'view_col' => [$S,$P,$S], # match child col in current view
-			'src_col' => [$S,$P,$HACK1,['table_col',[$P,'match_table']]], # match a src+table_col in current schema
-			'call_view' => [$S,$P,$S,$P], # match child view in current schema
-			'call_ufunc' => [$S,$P,$S,$P], # match child routine in current schema
+			'set_result_col' => [$S,$P,$S], # match child col in current view
+			'valf_src_col' => [$S,$P,$HACK1,['table_col',[$P,'match_table']]], # match a src+table_col in current schema
+			'valf_call_view' => [$S,$P,$S,$P], # match child view in current schema
+			'valf_call_uroutine' => [$S,$P,$S,$P], # match child routine in current schema
 		},
 	},
 	'routine' => {
@@ -199,13 +202,13 @@ my %NODE_TYPES_EXTRA_DETAILS = (
 	'routine_stmt' => {
 		'search_paths' => {
 			'block_routine' => [$P], # link to child routine of current routine
-			'dest_var' => [$P], # match child routine_var in current routine
+			'assign_dest_var' => [$P], # match child routine_var in current routine
 		},
 	},
 	'routine_expr' => {
 		'search_paths' => {
-			'routine_var' => [$S,$P,$P], # match child routine_var in current routine
-			'call_ufunc' => [$S,$P,$S,$P,$P], # match child routine in current schema
+			'valf_p_routine_var' => [$S,$P,$P], # match child routine_var in current routine
+			'valf_call_uroutine' => [$S,$P,$S,$P,$P], # match child routine in current schema
 		},
 	},
 );
@@ -371,8 +374,7 @@ sub _set_node_ref_attribute__do_when_no_id_match {
 		return( $attr_value_out );
 	} else {
 		$self->_throw_error_message( 'SRTSID_N_SET_NREF_AT_NO_ID_MATCH', 
-			{ 'ATNM' => $attr_name, 'HOSTTYPE' => $node_type, 
-			'ARG' => $attr_value, 'EXPTYPE' => $exp_node_type } );
+			{ 'ATNM' => $attr_name, 'ARG' => $attr_value, 'EXPNTYPE' => $exp_node_type } );
 	}
 }
 
@@ -487,8 +489,7 @@ sub set_attributes {
 	unless( ref($attrs) eq 'HASH' ) {
 		my $def_attr = $node_info_extras->{'def_attr'};
 		unless( $def_attr ) {
-			$node->_throw_error_message( 'SRTSID_N_SET_ATS_BAD_ARGS', 
-				{ 'ARG' => $attrs, 'HOSTTYPE' => $node_type } );
+			$node->_throw_error_message( 'SRTSID_N_SET_ATS_BAD_ARGS', { 'ARG' => $attrs } );
 		}
 		$attrs = { $def_attr => $attrs };
 	}

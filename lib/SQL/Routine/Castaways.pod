@@ -7,8 +7,8 @@ SQL::Routine::Castaways - Archaic functionality that was stripped from SQL::Rout
 This documentation file is a small place-holder to represent the
 "SQL-Routine-Castaways" distribution on CPAN; its NAME would get used by CPAN
 as the brief descriptive blurb for this distribution among a list of
-distributions.  You should continue by reading the documentation in the 2
-functional modules, SQL::Routine::ByTree and SQL::Routine::SkipID.
+distributions.  You should continue by reading the documentation in the 1
+functional modules, SQL::Routine::SkipID.
 
 =head2 THE FUTURE
 

@@ -1,3 +1,55 @@
+2004-11-02   Darren Duncan <perl@DarrenDuncan.net>
+
+	* Release 0.32.
+
+	* Starting with this release, SQL::Routine::ByTree no longer exists as its
+	own entity; it had been merged into the separately distributed SQL::Routine
+	with the latter module's v0.47 release.  The SQL-Routine-Castaways
+	distribution now only contains the SQL::Routine::SkipID module, which was
+	split off from Routine.pm a lot earlier than ByTree.pm was, and hence is
+	too much of a challenge to re-integrate at the present time.
+
+	* These 4 files were removed from the Castaways distribution, and all
+	references to them in other files (save the ChangeLog) were also removed:
+
+		lib/SQL/Routine/ByTree.pm
+		lib/SQL/Routine/ByTree/L/en.pm
+		t/lib/t_SQL_Routine_ByTree.pm
+		t/SQL_Routine_ByTree.t
+
+	* New code file versions are: SkipID.pm v0.32, SkipID/L/en.pm v0.07.
+
+	* Updated external dependencies on SQL::Routine to v0.45.  While that isn't
+	the newest SQL::Routine release, it is the newest version for which
+	maintaining compatability in SQL::Routine::SkipID is easy.  The next
+	SQL-Routine-Castaways release should bring SkipID up to date, which will
+	require more massive changes; those were skipped today since the main
+	purpose of the v0.32 release was removing ByTree.pm.
+
+	* In SkipID.pm, the data-dictionary (%NODE_TYPES_EXTRA_DETAILS) for these
+	Node types was updated: catalog, view_expr, routine_stmt, routine_expr; for
+	most, it was to rename attributes in the search_paths; for 'catalog', it
+	was to add attr_defaults.
+
+	* Corresponding updates in SkipID.pm and en.pm with these user messages:
+	SRTSID_N_SET_NREF_AT_NO_ID_MATCH, SRTSID_N_SET_ATS_BAD_ARGS.  In en.pm
+	alone, also updated SRTSID_N_CR_NODE_TREE_NO_ARGS.  In all 3 cases, the
+	updates concerned the variable list, which automatically contains the 
+	current Node type and ID due to an earlier Routine.pm change.
+
+	* In t_SQL_Routine_SkipID.pm, replaced 'expr_type' attributes with
+	'cont_type' attributes.  Also renamed these attributes: view_col ->
+	set_result_col, call_sfunc -> valf_call_sroutine, src_col -> valf_src_col,
+	lit_val -> valf_literal.
+
+	* Updated all code that referenced module version numbers so that those
+	numbers are now quoted in strings rather than being bare numbers.  In the
+	*.pm files, this affected only the "use" strings, since each $VERSION was
+	already declared as a string.  In the *.t files, the "use" strings.  In the
+	Makefile.PL, each PREREQ_PM item was updated.
+
+	* This release had no other changes.
+
 2004-10-04   Darren Duncan <perl@DarrenDuncan.net>
 
 	* Release 0.31.
@@ -30,7 +82,7 @@
 
 	* Updated the test file t_SQL_Routine_ByTree.pm in the following ways: 1.
 	Changed all routine_type attributes from ANONYMOUS to FUNCTION. 2. Set the
-	attribute 'return_var_type' on all 'routine' Nodes.	3. Added a child
+	attribute 'return_var_type' on all 'routine' Nodes. 3. Added a child
 	routine_stmt Node beneath each 'routine' Node. 4. Moved the 'name'
 	attribute of each 'view' Node in the output string to follow any
 	primary-parent attributes.
