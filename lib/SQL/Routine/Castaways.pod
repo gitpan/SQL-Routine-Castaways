@@ -1,0 +1,47 @@
+=head1 NAME
+
+SQL::Routine::Castaways - Archaic functionality that was stripped from SQL::Routine
+
+=head1 DESCRIPTION
+
+This documentation file is a small place-holder to represent the
+"SQL-Routine-Castaways" distribution on CPAN; its NAME would get used by CPAN
+as the brief descriptive blurb for this distribution among a list of
+distributions.  You should continue by reading the documentation in the 2
+functional modules, SQL::Routine::ByTree and SQL::Routine::SkipID.
+
+=head2 THE FUTURE
+
+No further development is planned for these modules, though the occasional
+updates may be made anyway.
+
+Their reason to exist so far has 3 main aspects: 1. To preserve functionality
+that was once developed in SQL::Routine and later stripped from it, for
+historical posterity or for learning from; 2. To help test SQL::Routine through
+its further development by exercising parts of it that other types of tests
+didn't touch, including the ability to be sub-classed, and this allowed me to
+expose bugs or design flaws in SQL::Routine a lot sooner; 3. to serve as an
+example to future module or application builders on ways that SQL::Routine can
+be used or extended.
+
+While I may occasionally give attention to these modules, such as to keep them
+compatible with changes to the parent class and test said parent, I will mostly
+be ignoring these modules from now on.  The parent and some other users of it
+will keep my attention instead.
+
+Note that I forsaw these modules' short life and intentionally gave them names
+which I thought other people would not want to use for a module themselves.
+
+If you would like to make new modules of your own which conceptually replaces
+any of these ones, and does the job properly, then you have my blessing.  But
+please tell me about it so I can add a reference to it.  You may also blatantly
+copy any code from these modules to your own, though I request to be credited. 
+Or alternately, if you wish to become the primary maintainer of these actual
+modules with respect to CPAN, then please write me to arrange it (and credit
+me).
+
+=head1 SEE ALSO
+
+SQL::Routine and various other modules mentioned in its SEE ALSO.
+
+=cut

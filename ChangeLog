@@ -1,0 +1,137 @@
+2004-10-04   Darren Duncan <perl@DarrenDuncan.net>
+
+	* Release 0.31.
+
+	* This is the first version of the SQL-Routine-Castaways distribution,
+	which is the result of merging the preexisting SQL-SyntaxModel-ByTree and
+	SQL-SyntaxModel-SkipID distributions.  All modules were renamed to
+	SQL::Routine::* from SQL::SyntaxModel::*, and the other files had similar
+	renaming.  All name-related strings, both in code and documentation, were
+	updated as follows: "SyntaxModel" -> "Routine", "SSM" -> "SRT".
+
+	* New code file versions are: ByTree.pm v0.31, ByTree/L/en.pm v0.06, 
+	SkipID.pm v0.31, SkipID/L/en.pm v0.06.
+
+	* Updated external dependencies on Locale::KeyedText to v1.00 and on
+	SQL::Routine to v0.43.
+
+	* Aside from the name references, version numbers, dependencies, and
+	following items, no changes were made to any code or documentation between
+	SQL-SyntaxModel-[ByTree|SkipID]-0.30 and SQL-Routine-Castaways-0.31.
+
+	* Updated the create[_child]_node_tree() methods in ByTree.pm and SkipID.pm
+	in the following ways: 1. Removed the add_reciprocal_links() invocations,
+	as that parent class method no longer exists (and isn't needed). 2. Renamed
+	the test_deferrable_constraints() method calls to
+	assert_deferrable_constraints(). 3. There are now two
+	assert_deferrable_constraints() calls per method, one prior to child Nodes
+	being created, and one after; the first call is wrapped in a try/catch
+	which traps 'SRT_N_ASDC_CH_N_TOO_FEW_SET' exceptions.
+
+	* Updated the test file t_SQL_Routine_ByTree.pm in the following ways: 1.
+	Changed all routine_type attributes from ANONYMOUS to FUNCTION. 2. Set the
+	attribute 'return_var_type' on all 'routine' Nodes.	3. Added a child
+	routine_stmt Node beneath each 'routine' Node. 4. Moved the 'name'
+	attribute of each 'view' Node in the output string to follow any
+	primary-parent attributes.
+
+	* Updated the test file t_SQL_Routine_SkipID.pm in the following ways: 1.
+	Changed the 'name' attribute of the first 'view' Node so that it is not
+	identical to the 'name' of a sibling 'table' Node.
+
+	* For historical posterity, here is this distribution's file manifest:
+
+		ChangeLog
+		INSTALL
+		lib/SQL/Routine/ByTree.pm
+		lib/SQL/Routine/ByTree/L/en.pm
+		lib/SQL/Routine/Castaways.pod
+		lib/SQL/Routine/SkipID.pm
+		lib/SQL/Routine/SkipID/L/en.pm
+		Makefile.PL
+		MANIFEST
+		META.yml                                Module meta-data (added by MakeMaker)
+		ReadMe
+		t/lib/t_SQL_Routine_ByTree.pm
+		t/lib/t_SQL_Routine_SkipID.pm
+		t/SQL_Routine_ByTree.t
+		t/SQL_Routine_SkipID.t
+		TODO
+
+2004-09-01   Darren Duncan <perl@DarrenDuncan.net>
+
+	* SQL-SyntaxModel-ByTree-0.30 and SQL-SyntaxModel-SkipID-0.30, the last
+	versions of the distributions having those names, were released on CPAN. 
+	Early versions of the modules that became the SQL-Routine-Castaways
+	distribution were included.
+
+2004-03-22   Darren Duncan <perl@DarrenDuncan.net>
+
+	* SQL-SyntaxModel-ByTree-0.28 and SQL-SyntaxModel-SkipID-0.28, the first
+	versions of the distributions having those names, were released on CPAN. 
+	Early versions of the modules that became the SQL-Routine-Castaways
+	distribution were included.
+
+2004-03-21   Darren Duncan <perl@DarrenDuncan.net>
+
+	* Rosetta-0.27, the last version of the distribution having that name which
+	contained the modules that became the SQL-Routine-Castaways distribution,
+	was released on CPAN.
+
+2003-01-27   Darren Duncan <perl@DarrenDuncan.net>
+
+	* Rosetta-0.02, the first version of a distribution having that name, was
+	released on CPAN.  Early versions of the modules that became the
+	SQL-Routine-Castaways distribution were included.
+
+2003-01-05   Darren Duncan <perl@DarrenDuncan.net>
+
+	* DBIx-Portable-0.01, the only version of a distribution having that name,
+	was released on CPAN.  Early versions of the modules that became the
+	SQL-Routine-Castaways distribution were included.
+
+2002-11-12   Darren Duncan <perl@DarrenDuncan.net>
+
+	* Began development on the modules which became the SQL-Routine-Castaways
+	distribution as their own entity that is separate from my application, for
+	open-source distribution on CPAN.  The modules were to comprise an
+	RDBMS-generic DB framework for any application to use.
+
+	* Modules based on a template created by h2xs 1.18.
+
+2002-07-28
+
+	* Posted the first significant update to the second prototype, which added
+	an index or cache for data that was expensive to calculate for each page
+	request, and involved rewriting about a fourth of the perl code.
+
+2002-06-07
+
+	* Posted to my website the second public prototype demo of the new
+	self-proprietary database driven application, whose database schema, user
+	interface, feature set, and Perl application code was almost completely
+	rewritten. The new version explicitly had separate modules for database
+	communication and the web interface logic, with MySQL-specific code and
+	database generic or data dictionary code in separate files, and separate
+	files for parts of the web interface.  The program used the same generic
+	CPAN modules as in the first prototype, DBI/MySQL and CGI::Portable.
+
+2001-11-24
+
+	* Posted the last update to the first prototype.
+
+2001-07-12
+
+	* Posted to my website the first public prototype demo of a new
+	self-proprietary database driven application, which is like a cross between
+	a multimedia metadata catalogue and a repository for historical or
+	genealogical data.  This application contained the first prototypes of code
+	that ended up in these modules.  All of this application's code, for
+	database communication and web interface logic, was situated in a single
+	module, with the rest of the program being more generic CPAN modules like
+	DBI (and DBD for MySQL) and CGI::Portable.
+
+2000-05-17
+
+	* Requested MySQL database privileges on my web host so I have something to
+	start developing, testing and deploying database driven applications on.
