@@ -7,8 +7,8 @@ BEGIN { $| = 1; print "1..5\n"; }
 END {print "not ok 1\n" unless $loaded;}
 use lib 't/lib';
 use t_SQL_Routine_SkipID;
-use SQL::Routine::SkipID '0.32';
-use SQL::Routine::SkipID::L::en '0.07';
+use SQL::Routine::SkipID '0.33';
+use SQL::Routine::SkipID::L::en '0.08';
 $loaded = 1;
 print "ok 1\n";
 use strict;

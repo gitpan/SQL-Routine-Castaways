@@ -11,7 +11,7 @@ use 5.006;
 use strict;
 use warnings;
 use vars qw($VERSION);
-$VERSION = '0.07';
+$VERSION = '0.08';
 
 ######################################################################
 
@@ -53,9 +53,6 @@ my $CC = 'SQL::Routine::SkipID::Container';
 my $CN = 'SQL::Routine::SkipID::Node';
 
 my %text_strings = (
-	'SRTSID_C_CR_NODE_TREE_NO_ARGS' => 
-		"$CC.create_node_tree(): missing argument",
-
 	'SRTSID_N_SET_NREF_AT_NO_ID_MATCH' => 
 		"$CN.set_node_ref_attribute(): concerning the '{NTYPE}' Node with Id '{NID}'; ".
 		"invalid ATTRS argument element; when trying to set '{ATNM}' attribute, ".
@@ -67,10 +64,6 @@ my %text_strings = (
 		"invalid ATTRS argument; it is not a hash ref, but rather is '{ARG}'; ".
 		"also, nodes of the current type have no default ".
 		"attribute to associate the given value with",
-
-	'SRTSID_N_CR_NODE_TREE_NO_ARGS' => 
-		"$CN.create_child_node_tree(): concerning the '{NTYPE}' Node with Id '{NID}'; ".
-		"missing argument",
 );
 
 ######################################################################

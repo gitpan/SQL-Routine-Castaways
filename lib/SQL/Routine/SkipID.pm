@@ -11,10 +11,10 @@ use 5.006;
 use strict;
 use warnings;
 use vars qw($VERSION);
-$VERSION = '0.32';
+$VERSION = '0.33';
 
 use Locale::KeyedText '1.00';
-use SQL::Routine '0.45';
+use SQL::Routine '0.47';
 
 use base qw( SQL::Routine );
 
@@ -29,7 +29,7 @@ Standard Modules: I<none>
 Nonstandard Modules: 
 
 	Locale::KeyedText 1.00 (for error messages)
-	SQL::Routine 0.45 (parent class)
+	SQL::Routine 0.47 (parent class)
 
 =head1 COPYRIGHT AND LICENSE
 
@@ -65,18 +65,33 @@ my $CPROP_LAST_NODES = 'last_nodes'; # hash of node refs; find last node created
 # More duplicate declarations:
 my $ATTR_ID      = 'id'; # attribute name to use for the node id
 
-# These named arguments are used with the create_[/child_]node_tree[/s]() methods:
-my $ARG_NODE_TYPE = 'NODE_TYPE'; # str - what type of Node we are
-my $ARG_ATTRS     = 'ATTRS'; # hash - our attributes, including refs/ids of parents we will have
-my $ARG_CHILDREN  = 'CHILDREN'; # list of refs to new Nodes we will become primary parent of
+# These special hash keys are used by the over-ridden build*node*() functions and methods:
+my $NAMED_NODE_TYPE = 'NODE_TYPE'; # str - what type of Node we are
+my $NAMED_ATTRS     = 'ATTRS'; # hash - all attributes, including 'id' and primary-parent-id
+my $NAMED_CHILDREN  = 'CHILDREN'; # array - list of child Node descriptors
 
 # This constant is used by the related node searching feature, and relates 
 # to the %NODE_TYPES_EXTRA_DETAILS hash, below.
 my $S = '.'; # when same node type directly inside itself, make sure on parentmost of current
 my $P = '..'; # means go up one parent level
-my $HACK1 = '[]'; # means use [view_src.name+table_col.name] to find a view_src_col in current view_rowset
+my $HACK1 = '[]'; # means use [view_src.name+table_field.name] to find a view_src_field in current view
 
 my %NODE_TYPES_EXTRA_DETAILS = (
+	'scalar_data_type' => {
+		'link_search_attr' => 'name',
+		'def_attr' => 'base_type',
+		'attr_defaults' => {
+			'base_type' => ['lit','STR_CHAR'],
+		},
+	},
+	'row_data_type' => {
+		'link_search_attr' => 'name',
+		'def_attr' => 'id',
+	},
+	'row_data_type_field' => {
+		'link_search_attr' => 'name',
+		'def_attr' => 'id',
+	},
 	'catalog' => {
 		'link_search_attr' => 'name',
 		'def_attr' => 'id',
@@ -100,13 +115,6 @@ my %NODE_TYPES_EXTRA_DETAILS = (
 			'owner' => ['last'],
 		},
 	},
-	'domain' => {
-		'link_search_attr' => 'name',
-		'def_attr' => 'base_type',
-		'attr_defaults' => {
-			'base_type' => ['lit','STR_CHAR'],
-		},
-	},
 	'sequence' => {
 		'link_search_attr' => 'name',
 		'def_attr' => 'name',
@@ -115,32 +123,33 @@ my %NODE_TYPES_EXTRA_DETAILS = (
 		'link_search_attr' => 'name',
 		'def_attr' => 'name',
 	},
-	'table_col' => {
-		'link_search_attr' => 'name',
-		'def_attr' => 'name',
+	'table_field' => {
+		'search_paths' => {
+			'row_field' => [$P,'row_data_type'], # match child col in current table
+		},
 		'attr_defaults' => {
 			'mandatory' => ['lit',0],
 		},
 	},
-	'table_ind' => {
+	'table_index' => {
 		'search_paths' => {
 			'f_table' => [$P,$P], # match child table in current schema
 		},
 		'link_search_attr' => 'name',
 		'def_attr' => 'name',
 	},
-	'table_ind_col' => {
+	'table_index_field' => {
 		'search_paths' => {
-			'table_col' => [$P,$P], # match child col in current table
-			'f_table_col' => [$P,'f_table'], # match child col in foreign table
+			'field' => [$P,$P,'row_data_type'], # match child col in current table
+			'f_field' => [$P,'f_table','row_data_type'], # match child col in foreign table
 		},
-		'def_attr' => 'table_col',
+		'def_attr' => 'field',
 	},
 	'view' => {
 		'link_search_attr' => 'name',
 		'def_attr' => 'name',
 		'attr_defaults' => {
-			'view_type' => ['lit','MULTIPLE'],
+			'view_type' => ['lit','JOINED'],
 		},
 	},
 	'view_src' => {
@@ -151,34 +160,34 @@ my %NODE_TYPES_EXTRA_DETAILS = (
 		'link_search_attr' => 'name',
 		'def_attr' => 'name',
 	},
-	'view_src_col' => {
+	'view_src_field' => {
 		'search_paths' => {
-			'match_table_col' => [$P,'match_table'], # match child col in other table
-			'match_view_col' => [$P,'match_view'], # match child col in other view
+			'match_field' => [$P,'match_table','row_data_type'], # match child col in other table
 		},
-		'link_search_attr' => 'match_table_col',
-		'def_attr' => 'match_table_col',
+		'link_search_attr' => 'match_field',
+		'def_attr' => 'match_field',
 	},
-	'view_col' => {
-		'link_search_attr' => 'name',
-		'def_attr' => 'name',
+	'view_field' => {
+		'search_paths' => {
+			'row_field' => [$P,'row_data_type'], # match child col in current view
+		},
 	},
 	'view_join' => {
 		'search_paths' => {
-			'lhs_src' => [$P], # match child view_src in current view_rowset
-			'rhs_src' => [$P], # match child view_src in current view_rowset
+			'lhs_src' => [$P], # match child view_src in current view
+			'rhs_src' => [$P], # match child view_src in current view
 		},
 	},
-	'view_join_col' => {
+	'view_join_field' => {
 		'search_paths' => {
-			'lhs_src_col' => [$P,'lhs_src',['table_col',[$P,'match_table']]], # ... recursive code
-			'rhs_src_col' => [$P,'rhs_src',['table_col',[$P,'match_table']]], # ... recursive code
+			'lhs_src_field' => [$P,'lhs_src',['row_data_type_field',[$P,'match_table','row_data_type']]], # ... recursive code
+			'rhs_src_field' => [$P,'rhs_src',['row_data_type_field',[$P,'match_table','row_data_type']]], # ... recursive code
 		},
 	},
 	'view_expr' => {
 		'search_paths' => {
-			'set_result_col' => [$S,$P,$S], # match child col in current view
-			'valf_src_col' => [$S,$P,$HACK1,['table_col',[$P,'match_table']]], # match a src+table_col in current schema
+			'set_result_field' => [$S,$P,'row_data_type'], # match child col in current view
+			'valf_src_field' => [$S,$P,$HACK1,['row_data_type_field',[$P,'match_table','row_data_type']]], # match a src+table_field in current schema
 			'valf_call_view' => [$S,$P,$S,$P], # match child view in current schema
 			'valf_call_uroutine' => [$S,$P,$S,$P], # match child routine in current schema
 		},
@@ -193,7 +202,7 @@ my %NODE_TYPES_EXTRA_DETAILS = (
 	},
 	'routine_var' => {
 		'search_paths' => {
-			'domain' => [$P,$S,$P,$P,$P], # match child datatype of root
+			'scalar_data_type' => [$P,$S,$P,$P,$P], # match child datatype of root
 			'curs_view' => [$P,$S,$P], # match child view in current schema
 		},
 		'link_search_attr' => 'name',
@@ -244,30 +253,29 @@ sub new {
 
 ######################################################################
 
-sub create_node_tree {
-	my ($container, $args) = @_;
-	defined( $args ) or $container->_throw_error_message( 'SRTSID_C_CR_NODE_TREE_NO_ARGS' ); # same er as p
-
-	unless( ref( $args ) eq 'HASH' ) {
-		$args = { $ARG_NODE_TYPE => $args };
+sub build_child_node_tree {
+	my ($container, $node_type, $attrs, $children) = @_;
+	if( ref($node_type) eq 'HASH' ) {
+		($node_type, $attrs, $children) = @{$node_type}{$NAMED_NODE_TYPE, $NAMED_ATTRS, $NAMED_CHILDREN};
 	}
 
-	my $node = $container->new_node( $args->{$ARG_NODE_TYPE} );
+	# TODO: Not die and route to children when $node_type is a pseudo-Node - valid input for parent.
 
-	my $node_type = $node->get_node_type();
+	my $new_node = $container->new_node( $node_type );
 
-	$node->get_node_id() or 
-		$node->set_node_id( $container->get_next_free_node_id( $node_type ) );
+	unless( $new_node->get_node_id() ) {
+		$new_node->set_node_id( $container->get_next_free_node_id( $node_type ) );
+	}
 
-	$node->put_in_container( $container );
-	$node->set_attributes( $args->{$ARG_ATTRS} ); # handles all attribute types; may override autogen node id
+	$new_node->put_in_container( $container );
+	$new_node->set_attributes( $attrs ); # handles node id and all attribute types
 
-	unless( $node->get_parent_node() ) {
-		$container->_create_node_tree__do_when_parent_not_set( $node );
+	unless( $new_node->get_pp_node() ) {
+		$container->_create_node_tree__do_when_parent_not_set( $new_node );
 	}
 
 	eval {
-		$node->assert_deferrable_constraints(); # check that this Node's own attrs are correct
+		$new_node->assert_deferrable_constraints(); # check that this Node's own attrs are correct
 	};
 	if( my $exception = $@ ) {
 		unless( $exception->get_message_key() eq 'SRT_N_ASDC_CH_N_TOO_FEW_SET' ) {
@@ -275,13 +283,13 @@ sub create_node_tree {
 		}
 	}
 
-	$container->{$CPROP_LAST_NODES}->{$node_type} = $node; # assign reference
+	$container->{$CPROP_LAST_NODES}->{$node_type} = $new_node; # assign reference
 
-	$node->create_child_node_trees( $args->{$ARG_CHILDREN} );
+	$new_node->build_child_node_trees( $children );
 
-	$node->assert_deferrable_constraints(); # now examine the set of child Nodes
+	$new_node->assert_deferrable_constraints();
 
-	return( $node );
+	return( $new_node );
 }
 
 sub _create_node_tree__do_when_parent_not_set {
@@ -294,23 +302,12 @@ sub _create_node_tree__do_when_parent_not_set {
 		if( my $parent = $container->{$CPROP_LAST_NODES}->{$exp_node_type} ) {
 			# The following two lines is what the old _make_child_to_parent_link did.
 			$node->set_node_ref_attribute( $attr_name, $parent );
-			$node->set_parent_node_attribute_name( $attr_name );
+			$node->set_pp_node_attribute_name( $attr_name );
 			last;
 		}
 	}
-	# If $node->get_parent_node() still has failed to be set, then the subsequent 
+	# If $node->get_pp_node() still has failed to be set, then the subsequent 
 	# call to $node->assert_deferrable_constraints() will throw an exception citing it.
-}
-
-sub create_node_trees {
-	my ($container, $list) = @_;
-	$list or return( undef );
-	unless( ref($list) eq 'ARRAY' ) {
-		$list = [ $list ];
-	}
-	foreach my $element (@{$list}) {
-		$container->create_node_tree( $element );
-	}
 }
 
 ######################################################################
@@ -358,7 +355,7 @@ sub _set_node_ref_attribute__do_when_no_id_match {
 		# No specific search path given, so search all nodes of the type.
 		$attr_value_out = $self->_find_node_by_link_search_attr( $exp_node_type, $attr_value );
 	} elsif( $attr_value ) { # note: attr_value may be a defined empty string
-		unless( $self->get_parent_node() ) {
+		unless( $self->get_pp_node() ) {
 			# Note: due to the above sorting, any attrs which could have set the 
 			# parent would be evaluated before ...no_id_match called for first time.
 			# We auto-set the parent here, earlier than create_node() would have, 
@@ -403,23 +400,23 @@ sub _search_for_node {
 		} elsif( $path_seg eq $S ) {
 			# Want to progress search via consec parents of same node type to first.
 			my $start_type = $curr_node->get_node_type();
-			while( $curr_node->get_parent_node() and $start_type eq
-					$curr_node->get_parent_node()->get_node_type() ) {
-				$curr_node = $curr_node->get_parent_node();
+			while( $curr_node->get_pp_node() and $start_type eq
+					$curr_node->get_pp_node()->get_node_type() ) {
+				$curr_node = $curr_node->get_pp_node();
 			}
 		} elsif( $path_seg eq $P ) {
 			# Want to progress search to the parent of the current node.
-			if( $curr_node->get_parent_node() ) {
+			if( $curr_node->get_pp_node() ) {
 				# There is a parent node, so move to it.
-				$curr_node = $curr_node->get_parent_node();
+				$curr_node = $curr_node->get_pp_node();
 			} else {
 				# There is no parent node; search has failed.
 				$curr_node = undef;
 				last;
 			}
 		} elsif( $path_seg eq $HACK1 ) {
-			# Assume curr_node is now a 'view_rowset'; we want to find a view_src_col below it.
-			# search_attr_value should be an array having 2 elements: view_src.name+table_col.name.
+			# Assume curr_node is now a 'view'; we want to find a view_src_field below it.
+			# search_attr_value should be an array having 2 elements: view_src.name+table_field.name.
 			# Progress search down one child node, so curr_node becomes a 'view_src'.
 			my $to_be_curr_node = undef;
 			my ($col_name, $src_name) = @{$search_attr_value};
@@ -535,30 +532,27 @@ sub set_attributes {
 
 ######################################################################
 
-sub create_child_node_tree {
-	my ($node, $args) = @_;
-	defined( $args ) or $node->_throw_error_message( 'SRTSID_N_CR_NODE_TREE_NO_ARGS' ); # same er as p
-
-	unless( ref( $args ) eq 'HASH' ) {
-		$args = { $ARG_NODE_TYPE => $args };
+sub build_child_node_tree {
+	my ($node, $node_type, $attrs, $children) = @_;
+	if( ref($node_type) eq 'HASH' ) {
+		($node_type, $attrs, $children) = @{$node_type}{$NAMED_NODE_TYPE, $NAMED_ATTRS, $NAMED_CHILDREN};
 	}
 
-	my $new_child = $node->new_node( $args->{$ARG_NODE_TYPE} );
-
-	my $child_node_type = $new_child->get_node_type();
+	my $new_node = $node->new_node( $node_type );
 
 	my $container = $node->get_container();
 
-	$new_child->get_node_id() or 
-		$new_child->set_node_id( $container->get_next_free_node_id( $child_node_type ) );
+	unless( $new_node->get_node_id() ) {
+		$new_node->set_node_id( $container->get_next_free_node_id( $node_type ) );
+	}
 
-	$new_child->put_in_container( $container );
+	$new_node->put_in_container( $container );
 
-	$node->add_child_node( $new_child ); # sets more attributes in new_child
+	$node->add_child_node( $new_node ); # sets more attributes in new_child
 
-	$new_child->set_attributes( $args->{$ARG_ATTRS} ); # handles node id and all attribute types
+	$new_node->set_attributes( $attrs ); # handles node id and all attribute types
 	eval {
-		$new_child->assert_deferrable_constraints(); # check that this Node's own attrs are correct
+		$new_node->assert_deferrable_constraints(); # check that this Node's own attrs are correct
 	};
 	if( my $exception = $@ ) {
 		unless( $exception->get_message_key() eq 'SRT_N_ASDC_CH_N_TOO_FEW_SET' ) {
@@ -566,28 +560,13 @@ sub create_child_node_tree {
 		}
 	}
 
-	$container->{$CPROP_LAST_NODES}->{$child_node_type} = $new_child; # assign reference
+	$container->{$CPROP_LAST_NODES}->{$node_type} = $new_node; # assign reference
 
-	$new_child->create_child_node_trees( $args->{$ARG_CHILDREN} );
+	$new_node->build_child_node_trees( $children );
 
-	$new_child->assert_deferrable_constraints();
+	$new_node->assert_deferrable_constraints();
 
-	return( $new_child );
-}
-
-sub create_child_node_trees {
-	my ($node, $list) = @_;
-	$list or return( undef );
-	unless( ref($list) eq 'ARRAY' ) {
-		$list = [ $list ];
-	}
-	foreach my $element (@{$list}) {
-		if( ref($element) eq ref($node) ) {
-			$node->add_child_node( $element ); # will die if not same Container
-		} else {
-			$node->create_child_node_tree( $element );
-		}
-	}
+	return( $new_node );
 }
 
 ######################################################################
@@ -599,7 +578,7 @@ __END__
 =head1 SYNOPSIS
 
 See the code inside the test script/module files that come with this module,
-'t/SQL_Routine_SkipID.t' and 'lib/t_SQL_Routine_SkipID.pm'.  That code
+'t/SQL_Routine_SkipID.t' and 't/lib/t_SQL_Routine_SkipID.pm'.  That code
 demonstrates input that can be provided to SQL::Routine::SkipID, along with
 a way to debug the result; it is a contrived example since the class normally
 wouldn't get used this way.  Such samples will not be shown in this POD to save
@@ -607,34 +586,13 @@ on redundancy.
 
 =head1 DESCRIPTION
 
-The SQL::Routine::SkipID Perl 5 module is a completely optional extension
-to SQL::Routine, and is implemented as a sub-class of that module.  This 
-module implements two distinct sets of additional features.
-
-=head2 The First Set of Additional Features
-
-This module adds a set of 4 new public methods which you can use to make some
-tasks involving SQL::Routine less labour-intensive, depending on how you
-like to use the module.
-
-Using them, you can create a Node, set all of its attributes, put it in a
-Container, and likewise recursively create all of its child Nodes, all with a
-single method call.  In the context of this module, the set of Nodes consisting
-of one starting Node and all of its "descendants" is called a "tree".  You can
-create a tree of Nodes in mainly two contexts; one context will assign the
-starting Node of the new tree as a child of an already existing Node; the other
-will not explicitly attach the tree to an existing Node.
-
-All of the added methods are wrappers over existing parent class methods, and
-this module does not define any new class properties that are used by them.
-
-=head2 The Second Set of Additional Features
-
-The public interface to this module is essentially the same as its parent, with
-the difference being that SQL::Routine::SkipID will accept a wider variety
-of input data formats into its methods.  Therefore, this module's documentation
-does not list or explain its methods (see the parent class for that), but it
-will mention any differences from the parent.
+The SQL::Routine::SkipID Perl 5 module is a completely optional extension to
+SQL::Routine, and is implemented as a sub-class of that module.  The public
+interface to this module is essentially the same as its parent, with the
+difference being that SQL::Routine::SkipID will accept a wider variety of input
+data formats into its methods.  Therefore, this module's documentation does not
+list or explain its methods (see the parent class for that), but it will
+mention any differences from the parent.
 
 The extension is intended to be fully parent-compatible, meaning that if you
 provide it input which would be acceptable to the stricter bare parent class,
@@ -671,9 +629,8 @@ most recent previously-created Node which is capable of becoming the new one's
 parent will do so.
 
 This module's added features can make it "easier to use" in some circumstances
-than the bare-bones SQL::Routine::SkipID, including an appearance more like
-actual SQL strings, because matching descriptive terms can be used in multiple
-places.
+than the bare-bones SQL::Routine, including an appearance more like actual SQL
+strings, because matching descriptive terms can be used in multiple places.
 
 However, the functionality has its added cost in code complexity and
 reliability; for example, since non-id attributes are not unique, the module
@@ -684,59 +641,6 @@ place you use the attribute value when you change the original, so they
 continue to match; this is unlike the bare parent class, which always uses
 non-descriptive attributes for links, which you are unlikely to ever change.
 The added logic also makes the code slower and use more memory.
-
-=head1 CONTAINER OBJECT METHODS
-
-=head2 create_node_tree( { NODE_TYPE[, ATTRS][, CHILDREN] } )
-
-	my $node = $model->create_node_tree( 
-		{ 'NODE_TYPE' => 'catalog', 'ATTRS' => { 'id' => 1, } } ); 
-
-This "setter" method creates a new Node object within the context of the
-current Container and returns it.  It takes a hash ref containing up to 3 named
-arguments: NODE_TYPE, ATTRS, CHILDREN.  The first argument, NODE_TYPE, is a
-string (enum) which specifies the Node Type of the new Node.  The second
-(optional) argument, ATTRS, is a hash ref whose elements will go in the various
-"attributes" properties of the new Node (and the "node id" property if
-applicable).  Any attributes which will refer to another Node can be passed in
-as either a Node object reference or an integer which matches the 'id'
-attribute of an already created Node.  The third (optional) argument, CHILDREN,
-is an array ref whose elements will also be recursively made into new Nodes,
-for which their primary parent is the Node you have just made here.  Elements
-in CHILDREN are always processed after the other arguments. If the root Node
-you are about to make should have a primary parent Node, then you would be
-better to use said parent's create_child_node_tree[/s] method instead of this
-one.  This method is actually a "wrapper" for a set of other, simpler
-function/method calls that you could call directly instead if you wanted more
-control over the process.
-
-=head2 create_node_trees( LIST )
-
-	$model->create_nodes( [{ ... }, { ... }] );
-	$model->create_nodes( { ... } );
-
-This "setter" method takes an array ref in its single LIST argument, and calls
-create_node_tree() for each element found in it.
-
-=head1 NODE OBJECT METHODS
-
-=head2 create_child_node_tree( { NODE_TYPE[, ATTRS][, CHILDREN] } )
-
-	my $new_child = $node->add_child_node( 
-		{ 'NODE_TYPE' => 'schema', 'ATTRS' => { 'id' => 1, } } ); 
-
-This "setter" method will create a new Node, following the same semantics (and
-taking the same arguments) as the Container->create_node_tree(), except that 
-create_child_node_tree() will also set the primary parent of the new Node to 
-be the current Node.  This method also returns the new child Node.
-
-=head2 create_child_node_trees( LIST )
-
-	$model->create_child_node_tree( [$child1,$child2] );
-	$model->create_child_node_tree( $child );
-
-This "setter" method takes an array ref in its single LIST argument, and calls
-create_child_node_tree() for each element found in it.
 
 =head1 BUGS
 
@@ -762,6 +666,6 @@ said there applies to this module also.
 =head1 SEE ALSO
 
 SQL::Routine::SkipID::L::en, SQL::Routine, and other items in its SEE
-ALSO documentation; also SQL::Routine::ByTree.
+ALSO documentation.
 
 =cut

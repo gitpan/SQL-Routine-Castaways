@@ -1,12 +1,12 @@
 # http://module-build.sourceforge.net/META-spec.html
 #XXXXXXX This is a prototype!!!  It will change in the future!!! XXXXX#
 name:         SQL-Routine-Castaways
-version:      0.32
+version:      0.33
 version_from: 
 installdirs:  site
 requires:
     Locale::KeyedText:             1.00
-    SQL::Routine:                  0.45
+    SQL::Routine:                  0.47
 
 distribution_type: module
 generated_by: ExtUtils::MakeMaker version 6.17

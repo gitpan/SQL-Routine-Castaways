@@ -1,5 +1,52 @@
 2004-11-02   Darren Duncan <perl@DarrenDuncan.net>
 
+	* Release 0.33.
+
+	* New code file versions are: SkipID.pm v0.33, SkipID/L/en.pm v0.08.
+
+	* Updated external dependencies on SQL::Routine to v0.47 (newest release).
+
+	* SQL::Routine::SkipID has now been reverted conceptually to the state it
+	was in during its 2003-12-18 release in the Rosetta-0.19 distribution.  At
+	that time, it did not add any new methods to the API of its super-class,
+	but simply overrode a few parent methods to make those less stringent in
+	what input data they accepted.  This state ceased to be with Rosetta-0.20,
+	because some of the public methods that SkipID.pm needed were also split
+	from its super-class.  However, those public methods rejoined the
+	super-class in SQL-Routine-0.47, so SkipID can now regain its old status
+	and no longer declare those extra public methods itself.
+
+	* The DESCRIPTION of SkipID.pm was reverted to its 2003-12-18 state, except
+	for a few tiny fixes.  Also, the entire 2 SkipID.pm POD sections entitled
+	[CONTAINER|NODE] OBJECT METHODS were removed.  Tiny SYNOPSIS fix.
+
+	* Renamed the 2 SkipID.pm methods Container.create_node_tree() and
+	Node.create_child_node_tree() both to
+	[Container|Node].build_child_node_tree(), and updated their code to more
+	closely resemble the SQL::Routine methods they are overriding.  Also
+	deleted the 2 user messages "SRTSID_[C|N]_CR_NODE_TREE_NO_ARGS" from en.pm,
+	as these updated methods no longer use them; that is the only en.pm change.
+
+	* Deleted the 2 SkipID.pm methods create_[child_]node_trees() as they are
+	now completely redundant with the parent's build_child_node_trees() methods.
+
+	* Renamed any calls on the parent's *parent_node*() methods to *pp_node*().
+
+	* Made several %NODE_TYPES_EXTRA_DETAILS data dictionary changes in
+	SkipID.pm.  All Node types and attribute names having 'col' were renamed to
+	'field'; also, any 'ind' were renamed to 'index'.  The 'domain' Node type
+	was renamed to 'scalar_data_type', and these types were added:
+	'row_data_type', 'row_data_type_field'.  The 'search_paths' were added or
+	updated for these Node types: table_field, table_index_field,
+	view_src_field, view_field, view_join_field, view_expr.  The view.view_type
+	default value changed from 'MULTIPLE' to 'JOINED'.
+
+	* Multiple significant updates to t_SQL_Routine_SkipID.pm, to bring it up
+	to date with all the SQL::Routine v0.46 and v0.47 changes, plus the
+	effective renaming of the Node-tree-building methods.
+
+2004-11-02   Darren Duncan <perl@DarrenDuncan.net>
+
 	* Release 0.32.
 
 	* Starting with this release, SQL::Routine::ByTree no longer exists as its

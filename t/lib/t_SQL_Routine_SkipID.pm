@@ -13,9 +13,9 @@ sub create_and_populate_model {
 
 	my $model = $class->new_container();
 
-	$model->create_node_trees( ['catalog', 'owner', 'schema'] );
+	##### NEXT SET CATALOG ELEMENT-TYPE DETAILS #####
 
-	$model->create_node_trees( [ map { { 'NODE_TYPE' => 'domain', 'ATTRS' => $_ } } (
+	$model->build_child_node_trees( [ map { { 'NODE_TYPE' => 'scalar_data_type', 'ATTRS' => $_ } } (
 		{ 'name' => 'bin1k' , 'base_type' => 'STR_BIT', 'max_octets' =>  1_000, },
 		{ 'name' => 'bin32k', 'base_type' => 'STR_BIT', 'max_octets' => 32_000, },
 		{ 'name' => 'str4'  , 'base_type' => 'STR_CHAR', 'max_chars' =>  4, 'store_fixed' => 1, 
@@ -50,246 +50,311 @@ sub create_and_populate_model {
 		{ 'name' => 'generic' , 'base_type' => 'STR_CHAR', 'max_chars' => 250, 'char_enc' => 'ASCII', },
 	) ] );
 
-	$model->create_node_tree( { 'NODE_TYPE' => 'table', 
+	$model->build_child_node_tree( { 'NODE_TYPE' => 'row_data_type', 
 			'ATTRS' => { 'name' => 'person', }, 'CHILDREN' => [ 
-		( map { { 'NODE_TYPE' => 'table_col', 'ATTRS' => $_ } } (
-			{
-				'name' => 'person_id', 'domain' => 'int', 'mandatory' => 1,
-				'default_val' => 1, 'auto_inc' => 1,
-			},
-			{ 'name' => 'alternate_id', 'domain' => 'str20' , },
-			{ 'name' => 'name'        , 'domain' => 'str100', 'mandatory' => 1, },
-			{ 'name' => 'sex'         , 'domain' => 'sex'   , },
-			{ 'name' => 'father_id'   , 'domain' => 'int'   , },
-			{ 'name' => 'mother_id'   , 'domain' => 'int'   , },
-		) ),
-		( map { { 'NODE_TYPE' => 'table_ind', 'ATTRS' => $_->[0], 
-				'CHILDREN' => { 'NODE_TYPE' => 'table_ind_col', 'ATTRS' => $_->[1] } } } (
-			[ { 'name' => 'primary'        , 'ind_type' => 'UNIQUE', }, 'person_id'    ], 
-			[ { 'name' => 'ak_alternate_id', 'ind_type' => 'UNIQUE', }, 'alternate_id' ], 
-			[ { 'name' => 'fk_father', 'ind_type' => 'FOREIGN', 'f_table' => 'person', }, 
-				{ 'table_col' => 'father_id', 'f_table_col' => 'person_id' } ], 
-			[ { 'name' => 'fk_mother', 'ind_type' => 'FOREIGN', 'f_table' => 'person', }, 
-				{ 'table_col' => 'mother_id', 'f_table_col' => 'person_id' } ], 
+		( map { { 'NODE_TYPE' => 'row_data_type_field', 'ATTRS' => $_ } } (
+			{ 'name' => 'person_id'   , 'scalar_data_type' => 'int'   , },
+			{ 'name' => 'alternate_id', 'scalar_data_type' => 'str20' , },
+			{ 'name' => 'name'        , 'scalar_data_type' => 'str100', },
+			{ 'name' => 'sex'         , 'scalar_data_type' => 'sex'   , },
+			{ 'name' => 'father_id'   , 'scalar_data_type' => 'int'   , },
+			{ 'name' => 'mother_id'   , 'scalar_data_type' => 'int'   , },
 		) ),
 	] } );
 
-	$model->create_node_tree( { 'NODE_TYPE' => 'view', 
-			'ATTRS' => { 'name' => 'person_vw', 'view_type' => 'MATCH', 'may_write' => 1 }, 'CHILDREN' => [ 
+	$model->build_child_node_tree( { 'NODE_TYPE' => 'row_data_type', 
+			'ATTRS' => { 'name' => 'person_with_parents', }, 'CHILDREN' => [ 
+		( map { { 'NODE_TYPE' => 'row_data_type_field', 'ATTRS' => $_ } } (
+			{ 'name' => 'self_id'    , 'scalar_data_type' => 'int'   , },
+			{ 'name' => 'self_name'  , 'scalar_data_type' => 'str100', },
+			{ 'name' => 'father_id'  , 'scalar_data_type' => 'int'   , },
+			{ 'name' => 'father_name', 'scalar_data_type' => 'str100', },
+			{ 'name' => 'mother_id'  , 'scalar_data_type' => 'int'   , },
+			{ 'name' => 'mother_name', 'scalar_data_type' => 'str100', },
+		) ),
+	] } );
+
+	$model->build_child_node_tree( { 'NODE_TYPE' => 'row_data_type', 
+			'ATTRS' => { 'name' => 'user_auth', }, 'CHILDREN' => [ 
+		( map { { 'NODE_TYPE' => 'row_data_type_field', 'ATTRS' => $_ } } (
+			{ 'name' => 'user_id'      , 'scalar_data_type' => 'int'    , },
+			{ 'name' => 'login_name'   , 'scalar_data_type' => 'str20'  , },
+			{ 'name' => 'login_pass'   , 'scalar_data_type' => 'str20'  , },
+			{ 'name' => 'private_name' , 'scalar_data_type' => 'str100' , },
+			{ 'name' => 'private_email', 'scalar_data_type' => 'str100' , },
+			{ 'name' => 'may_login'    , 'scalar_data_type' => 'boolean', },
+			{ 'name' => 'max_sessions' , 'scalar_data_type' => 'byte'   , },
+		) ),
+	] } );
+
+	$model->build_child_node_tree( { 'NODE_TYPE' => 'row_data_type', 
+			'ATTRS' => { 'name' => 'user_profile', }, 'CHILDREN' => [ 
+		( map { { 'NODE_TYPE' => 'row_data_type_field', 'ATTRS' => $_ } } (
+			{ 'name' => 'user_id'     , 'scalar_data_type' => 'int'   , },
+			{ 'name' => 'public_name' , 'scalar_data_type' => 'str250', },
+			{ 'name' => 'public_email', 'scalar_data_type' => 'str250', },
+			{ 'name' => 'web_url'     , 'scalar_data_type' => 'str250', },
+			{ 'name' => 'contact_net' , 'scalar_data_type' => 'str250', },
+			{ 'name' => 'contact_phy' , 'scalar_data_type' => 'str250', },
+			{ 'name' => 'bio'         , 'scalar_data_type' => 'str250', },
+			{ 'name' => 'plan'        , 'scalar_data_type' => 'str250', },
+			{ 'name' => 'comments'    , 'scalar_data_type' => 'str250', },
+		) ),
+	] } );
+
+	$model->build_child_node_tree( { 'NODE_TYPE' => 'row_data_type', 
+			'ATTRS' => { 'name' => 'user', }, 'CHILDREN' => [ 
+		( map { { 'NODE_TYPE' => 'row_data_type_field', 'ATTRS' => $_ } } (
+			{ 'name' => 'user_id'      , 'scalar_data_type' => 'int'    , },
+			{ 'name' => 'login_name'   , 'scalar_data_type' => 'str20'  , },
+			{ 'name' => 'login_pass'   , 'scalar_data_type' => 'str20'  , },
+			{ 'name' => 'private_name' , 'scalar_data_type' => 'str100' , },
+			{ 'name' => 'private_email', 'scalar_data_type' => 'str100' , },
+			{ 'name' => 'may_login'    , 'scalar_data_type' => 'boolean', },
+			{ 'name' => 'max_sessions' , 'scalar_data_type' => 'byte'   , },
+			{ 'name' => 'public_name'  , 'scalar_data_type' => 'str250' , },
+			{ 'name' => 'public_email' , 'scalar_data_type' => 'str250' , },
+			{ 'name' => 'web_url'      , 'scalar_data_type' => 'str250' , },
+			{ 'name' => 'contact_net'  , 'scalar_data_type' => 'str250' , },
+			{ 'name' => 'contact_phy'  , 'scalar_data_type' => 'str250' , },
+			{ 'name' => 'bio'          , 'scalar_data_type' => 'str250' , },
+			{ 'name' => 'plan'         , 'scalar_data_type' => 'str250' , },
+			{ 'name' => 'comments'     , 'scalar_data_type' => 'str250' , },
+		) ),
+	] } );
+
+	$model->build_child_node_tree( { 'NODE_TYPE' => 'row_data_type', 
+			'ATTRS' => { 'name' => 'user_pref', }, 'CHILDREN' => [ 
+		( map { { 'NODE_TYPE' => 'row_data_type_field', 'ATTRS' => $_ } } (
+			{ 'name' => 'user_id'   , 'scalar_data_type' => 'int'     , },
+			{ 'name' => 'pref_name' , 'scalar_data_type' => 'entitynm', },
+			{ 'name' => 'pref_value', 'scalar_data_type' => 'generic' , },
+		) ),
+	] } );
+
+	$model->build_child_node_tree( { 'NODE_TYPE' => 'row_data_type', 
+			'ATTRS' => { 'name' => 'user_theme', }, 'CHILDREN' => [ 
+		( map { { 'NODE_TYPE' => 'row_data_type_field', 'ATTRS' => $_ } } (
+			{ 'name' => 'theme_name' , 'scalar_data_type' => 'generic', },
+			{ 'name' => 'theme_count', 'scalar_data_type' => 'int'    , },
+		) ),
+	] } );
+
+	##### NEXT SET APPLICATION ELEMENT-TYPE DETAILS #####
+
+	# ... TODO ...
+
+	##### NEXT SET CATALOG BLUEPRINT-TYPE DETAILS #####
+
+	$model->build_child_node_trees( ['catalog', 'owner', 'schema'] );
+
+	$model->build_child_node_tree( { 'NODE_TYPE' => 'table', 
+			'ATTRS' => { 'name' => 'person', 'row_data_type' => 'person', }, 'CHILDREN' => [ 
+		( map { { 'NODE_TYPE' => 'table_field', 'ATTRS' => $_ } } (
+			{ 'row_field' => 'person_id', 'mandatory' => 1, 'default_val' => 1, 'auto_inc' => 1, },
+			{ 'row_field' => 'name'     , 'mandatory' => 1, },
+		) ),
+		( map { { 'NODE_TYPE' => 'table_index', 'ATTRS' => $_->[0], 
+				'CHILDREN' => { 'NODE_TYPE' => 'table_index_field', 'ATTRS' => $_->[1] } } } (
+			[ { 'name' => 'primary'        , 'index_type' => 'UNIQUE', }, 'person_id'    ], 
+			[ { 'name' => 'ak_alternate_id', 'index_type' => 'UNIQUE', }, 'alternate_id' ], 
+			[ { 'name' => 'fk_father', 'index_type' => 'FOREIGN', 'f_table' => 'person', }, 
+				{ 'field' => 'father_id', 'f_field' => 'person_id' } ], 
+			[ { 'name' => 'fk_mother', 'index_type' => 'FOREIGN', 'f_table' => 'person', }, 
+				{ 'field' => 'mother_id', 'f_field' => 'person_id' } ], 
+		) ),
+	] } );
+
+	$model->build_child_node_tree( { 'NODE_TYPE' => 'view', 
+			'ATTRS' => { 'name' => 'person_vw', 'view_type' => 'ALIAS', 'row_data_type' => 'person', 'may_write' => 1 }, 'CHILDREN' => [ 
 		{ 'NODE_TYPE' => 'view_src', 'ATTRS' => { 'name' => 'person', 'match_table' => 'person', }, },
 	] } );
 
-	$model->create_node_tree( { 'NODE_TYPE' => 'view', 
-			'ATTRS' => { 'name' => 'person_with_parents', 'may_write' => 0, }, 'CHILDREN' => [ 
-		( map { { 'NODE_TYPE' => 'view_col', 'ATTRS' => $_ } } (
-			{ 'name' => 'self_id'    , 'domain' => 'int'   , },
-			{ 'name' => 'self_name'  , 'domain' => 'str100', },
-			{ 'name' => 'father_id'  , 'domain' => 'int'   , },
-			{ 'name' => 'father_name', 'domain' => 'str100', },
-			{ 'name' => 'mother_id'  , 'domain' => 'int'   , },
-			{ 'name' => 'mother_name', 'domain' => 'str100', },
-		) ),
+	$model->build_child_node_tree( { 'NODE_TYPE' => 'view', 
+			'ATTRS' => { 'name' => 'person_with_parents', 'row_data_type' => 'person_with_parents', 'may_write' => 0, }, 'CHILDREN' => [ 
 		( map { { 'NODE_TYPE' => 'view_src', 'ATTRS' => { 'name' => $_, 'match_table' => 'person', }, 
-			'CHILDREN' => [ map { { 'NODE_TYPE' => 'view_src_col', 'ATTRS' => $_ } } qw( person_id name father_id mother_id ) ] 
+			'CHILDREN' => [ map { { 'NODE_TYPE' => 'view_src_field', 'ATTRS' => $_ } } qw( person_id name father_id mother_id ) ] 
 		} } qw( self ) ),
 		( map { { 'NODE_TYPE' => 'view_src', 'ATTRS' => { 'name' => $_, 'match_table' => 'person', }, 
-			'CHILDREN' => [ map { { 'NODE_TYPE' => 'view_src_col', 'ATTRS' => $_ } } qw( person_id name ) ] 
+			'CHILDREN' => [ map { { 'NODE_TYPE' => 'view_src_field', 'ATTRS' => $_ } } qw( person_id name ) ] 
 		} } qw( father mother ) ),
 		{ 'NODE_TYPE' => 'view_join', 'ATTRS' => { 'lhs_src' => 'self', 
-				'rhs_src' => 'father', 'join_type' => 'LEFT', }, 'CHILDREN' => [ 
-			{ 'NODE_TYPE' => 'view_join_col', 'ATTRS' => { 'lhs_src_col' => 'father_id', 
-				'rhs_src_col' => 'person_id',  } },
+				'rhs_src' => 'father', 'join_op' => 'LEFT', }, 'CHILDREN' => [ 
+			{ 'NODE_TYPE' => 'view_join_field', 'ATTRS' => { 'lhs_src_field' => 'father_id', 
+				'rhs_src_field' => 'person_id',  } },
 		] },
 		{ 'NODE_TYPE' => 'view_join', 'ATTRS' => { 'lhs_src' => 'self', 
-				'rhs_src' => 'mother', 'join_type' => 'LEFT', }, 'CHILDREN' => [ 
-			{ 'NODE_TYPE' => 'view_join_col', 'ATTRS' => { 'lhs_src_col' => 'mother_id', 
-				'rhs_src_col' => 'person_id',  } },
+				'rhs_src' => 'mother', 'join_op' => 'LEFT', }, 'CHILDREN' => [ 
+			{ 'NODE_TYPE' => 'view_join_field', 'ATTRS' => { 'lhs_src_field' => 'mother_id', 
+				'rhs_src_field' => 'person_id',  } },
 		] },
 		( map { { 'NODE_TYPE' => 'view_expr', 'ATTRS' => $_ } } (
-			{ 'view_part' => 'RESULT', 'set_result_col' => 'self_id'    , 'cont_type' => 'SCALAR', 'valf_src_col' => ['person_id','self'], },
-			{ 'view_part' => 'RESULT', 'set_result_col' => 'self_name'  , 'cont_type' => 'SCALAR', 'valf_src_col' => ['name'     ,'self'], },
-			{ 'view_part' => 'RESULT', 'set_result_col' => 'father_id'  , 'cont_type' => 'SCALAR', 'valf_src_col' => ['person_id','father'], },
-			{ 'view_part' => 'RESULT', 'set_result_col' => 'father_name', 'cont_type' => 'SCALAR', 'valf_src_col' => ['name'     ,'father'], },
-			{ 'view_part' => 'RESULT', 'set_result_col' => 'mother_id'  , 'cont_type' => 'SCALAR', 'valf_src_col' => ['person_id','mother'], },
-			{ 'view_part' => 'RESULT', 'set_result_col' => 'mother_name', 'cont_type' => 'SCALAR', 'valf_src_col' => ['name'     ,'mother'], },
+			{ 'view_part' => 'RESULT', 'set_result_field' => 'self_id'    , 'cont_type' => 'SCALAR', 'valf_src_field' => ['person_id','self'], },
+			{ 'view_part' => 'RESULT', 'set_result_field' => 'self_name'  , 'cont_type' => 'SCALAR', 'valf_src_field' => ['name'     ,'self'], },
+			{ 'view_part' => 'RESULT', 'set_result_field' => 'father_id'  , 'cont_type' => 'SCALAR', 'valf_src_field' => ['person_id','father'], },
+			{ 'view_part' => 'RESULT', 'set_result_field' => 'father_name', 'cont_type' => 'SCALAR', 'valf_src_field' => ['name'     ,'father'], },
+			{ 'view_part' => 'RESULT', 'set_result_field' => 'mother_id'  , 'cont_type' => 'SCALAR', 'valf_src_field' => ['person_id','mother'], },
+			{ 'view_part' => 'RESULT', 'set_result_field' => 'mother_name', 'cont_type' => 'SCALAR', 'valf_src_field' => ['name'     ,'mother'], },
 		) ),
 		{ 'NODE_TYPE' => 'view_expr', 'ATTRS' => { 'view_part' => 'WHERE', 
 				'cont_type' => 'SCALAR', 'valf_call_sroutine' => 'AND', }, 'CHILDREN' => [ 
 			{ 'NODE_TYPE' => 'view_expr', 'ATTRS' => { 
 					'cont_type' => 'SCALAR', 'valf_call_sroutine' => 'LIKE', }, 'CHILDREN' => [ 
 				{ 'NODE_TYPE' => 'view_expr', 'ATTRS' => { 
-					'cont_type' => 'SCALAR', 'valf_src_col' => ['name','father'], }, },
+					'cont_type' => 'SCALAR', 'valf_src_field' => ['name','father'], }, },
 #				{ 'NODE_TYPE' => 'view_expr', 'ATTRS' => { 
-#					'cont_type' => 'SCALAR', 'routine_arg' => 'srchw_fa', }, },
+#					'cont_type' => 'SCALAR', 'valf_p_routine_arg' => 'srchw_fa', }, },
 			] },
 			{ 'NODE_TYPE' => 'view_expr', 'ATTRS' => { 
 					'cont_type' => 'SCALAR', 'valf_call_sroutine' => 'LIKE', }, 'CHILDREN' => [ 
 				{ 'NODE_TYPE' => 'view_expr', 'ATTRS' => { 
-					'cont_type' => 'SCALAR', 'valf_src_col' => ['name','mother'], }, },
+					'cont_type' => 'SCALAR', 'valf_src_field' => ['name','mother'], }, },
 #				{ 'NODE_TYPE' => 'view_expr', 'ATTRS' => { 
-#					'cont_type' => 'SCALAR', 'routine_arg' => 'srchw_mo', }, },
+#					'cont_type' => 'SCALAR', 'valf_p_routine_arg' => 'srchw_mo', }, },
 			] },
 		] },
 	] } );
 
-	$model->create_node_tree( { 'NODE_TYPE' => 'table', 
-			'ATTRS' => { 'name' => 'user_auth', }, 'CHILDREN' => [ 
-		( map { { 'NODE_TYPE' => 'table_col', 'ATTRS' => $_ } } (
-			{
-				'name' => 'user_id', 'domain' => 'int', 'mandatory' => 1,
-				'default_val' => 1, 'auto_inc' => 1,
-			},
-			{ 'name' => 'login_name'   , 'domain' => 'str20'  , 'mandatory' => 1, },
-			{ 'name' => 'login_pass'   , 'domain' => 'str20'  , 'mandatory' => 1, },
-			{ 'name' => 'private_name' , 'domain' => 'str100' , 'mandatory' => 1, },
-			{ 'name' => 'private_email', 'domain' => 'str100' , 'mandatory' => 1, },
-			{ 'name' => 'may_login'    , 'domain' => 'boolean', 'mandatory' => 1, },
-			{ 
-				'name' => 'max_sessions', 'domain' => 'byte', 'mandatory' => 1, 
-				'default_val' => 3, 
-			},
+	$model->build_child_node_tree( { 'NODE_TYPE' => 'table', 
+			'ATTRS' => { 'name' => 'user_auth', 'row_data_type' => 'user_auth', }, 'CHILDREN' => [ 
+		( map { { 'NODE_TYPE' => 'table_field', 'ATTRS' => $_ } } (
+			{ 'row_field' => 'user_id'      , 'mandatory' => 1, 'default_val' => 1, 'auto_inc' => 1, },
+			{ 'row_field' => 'login_name'   , 'mandatory' => 1, },
+			{ 'row_field' => 'login_pass'   , 'mandatory' => 1, },
+			{ 'row_field' => 'private_name' , 'mandatory' => 1, },
+			{ 'row_field' => 'private_email', 'mandatory' => 1, },
+			{ 'row_field' => 'may_login'    , 'mandatory' => 1, },
+			{ 'row_field' => 'max_sessions' , 'mandatory' => 1, 'default_val' => 3, },
 		) ),
-		( map { { 'NODE_TYPE' => 'table_ind', 'ATTRS' => $_->[0], 
-				'CHILDREN' => { 'NODE_TYPE' => 'table_ind_col', 'ATTRS' => $_->[1] } } } (
-			[ { 'name' => 'primary'         , 'ind_type' => 'UNIQUE', }, 'user_id'       ],
-			[ { 'name' => 'ak_login_name'   , 'ind_type' => 'UNIQUE', }, 'login_name'    ],
-			[ { 'name' => 'ak_private_email', 'ind_type' => 'UNIQUE', }, 'private_email' ],
+		( map { { 'NODE_TYPE' => 'table_index', 'ATTRS' => $_->[0], 
+				'CHILDREN' => { 'NODE_TYPE' => 'table_index_field', 'ATTRS' => $_->[1] } } } (
+			[ { 'name' => 'primary'         , 'index_type' => 'UNIQUE', }, 'user_id'       ],
+			[ { 'name' => 'ak_login_name'   , 'index_type' => 'UNIQUE', }, 'login_name'    ],
+			[ { 'name' => 'ak_private_email', 'index_type' => 'UNIQUE', }, 'private_email' ],
 		) ),
 	] } );
 
-	$model->create_node_tree( { 'NODE_TYPE' => 'table', 
-			'ATTRS' => { 'name' => 'user_profile', }, 'CHILDREN' => [ 
-		( map { { 'NODE_TYPE' => 'table_col', 'ATTRS' => $_ } } (
-			{ 'name' => 'user_id'     , 'domain' => 'int'   , 'mandatory' => 1, },
-			{ 'name' => 'public_name' , 'domain' => 'str250', 'mandatory' => 1, },
-			{ 'name' => 'public_email', 'domain' => 'str250', 'mandatory' => 0, },
-			{ 'name' => 'web_url'     , 'domain' => 'str250', 'mandatory' => 0, },
-			{ 'name' => 'contact_net' , 'domain' => 'str250', 'mandatory' => 0, },
-			{ 'name' => 'contact_phy' , 'domain' => 'str250', 'mandatory' => 0, },
-			{ 'name' => 'bio'         , 'domain' => 'str250', 'mandatory' => 0, },
-			{ 'name' => 'plan'        , 'domain' => 'str250', 'mandatory' => 0, },
-			{ 'name' => 'comments'    , 'domain' => 'str250', 'mandatory' => 0, },
+	$model->build_child_node_tree( { 'NODE_TYPE' => 'table', 
+			'ATTRS' => { 'name' => 'user_profile', 'row_data_type' => 'user_profile', }, 'CHILDREN' => [ 
+		( map { { 'NODE_TYPE' => 'table_field', 'ATTRS' => $_ } } (
+			{ 'row_field' => 'user_id'    , 'mandatory' => 1, },
+			{ 'row_field' => 'public_name', 'mandatory' => 1, },
 		) ),
-		( map { { 'NODE_TYPE' => 'table_ind', 'ATTRS' => $_->[0], 
-				'CHILDREN' => { 'NODE_TYPE' => 'table_ind_col', 'ATTRS' => $_->[1] } } } (
-			[ { 'name' => 'primary'       , 'ind_type' => 'UNIQUE', }, 'user_id'     ],
-			[ { 'name' => 'ak_public_name', 'ind_type' => 'UNIQUE', }, 'public_name' ],
-			[ { 'name' => 'fk_user', 'ind_type' => 'FOREIGN', 'f_table' => 'user_auth', }, 
-				{ 'table_col' => 'user_id', 'f_table_col' => 'user_id' } ], 
+		( map { { 'NODE_TYPE' => 'table_index', 'ATTRS' => $_->[0], 
+				'CHILDREN' => { 'NODE_TYPE' => 'table_index_field', 'ATTRS' => $_->[1] } } } (
+			[ { 'name' => 'primary'       , 'index_type' => 'UNIQUE', }, 'user_id'     ],
+			[ { 'name' => 'ak_public_name', 'index_type' => 'UNIQUE', }, 'public_name' ],
+			[ { 'name' => 'fk_user', 'index_type' => 'FOREIGN', 'f_table' => 'user_auth', }, 
+				{ 'field' => 'user_id', 'f_field' => 'user_id' } ], 
 		) ),
 	] } );
 
-	$model->create_node_tree( { 'NODE_TYPE' => 'view', 
-			'ATTRS' => { 'name' => 'user', 'may_write' => 1, }, 'CHILDREN' => [ 
-		( map { { 'NODE_TYPE' => 'view_col', 'ATTRS' => $_ } } (
-			{ 'name' => 'user_id'      , 'domain' => 'int'    , },
-			{ 'name' => 'login_name'   , 'domain' => 'str20'  , },
-			{ 'name' => 'login_pass'   , 'domain' => 'str20'  , },
-			{ 'name' => 'private_name' , 'domain' => 'str100' , },
-			{ 'name' => 'private_email', 'domain' => 'str100' , },
-			{ 'name' => 'may_login'    , 'domain' => 'boolean', },
-			{ 'name' => 'max_sessions' , 'domain' => 'byte'   , },
-			{ 'name' => 'public_name'  , 'domain' => 'str250' , },
-			{ 'name' => 'public_email' , 'domain' => 'str250' , },
-			{ 'name' => 'web_url'      , 'domain' => 'str250' , },
-			{ 'name' => 'contact_net'  , 'domain' => 'str250' , },
-			{ 'name' => 'contact_phy'  , 'domain' => 'str250' , },
-			{ 'name' => 'bio'          , 'domain' => 'str250' , },
-			{ 'name' => 'plan'         , 'domain' => 'str250' , },
-			{ 'name' => 'comments'     , 'domain' => 'str250' , },
-		) ),
+	$model->build_child_node_tree( { 'NODE_TYPE' => 'view', 
+			'ATTRS' => { 'name' => 'user', 'row_data_type' => 'user', 'may_write' => 1, }, 'CHILDREN' => [ 
 		{ 'NODE_TYPE' => 'view_src', 'ATTRS' => { 'name' => 'user_auth', 
 				'match_table' => 'user_auth', }, 'CHILDREN' => [ 
-			( map { { 'NODE_TYPE' => 'view_src_col', 'ATTRS' => $_ } } qw(
+			( map { { 'NODE_TYPE' => 'view_src_field', 'ATTRS' => $_ } } qw(
 				user_id login_name login_pass private_name private_email may_login max_sessions
 			) ),
 		] },
 		{ 'NODE_TYPE' => 'view_src', 'ATTRS' => { 'name' => 'user_profile', 
 				'match_table' => 'user_profile', }, 'CHILDREN' => [ 
-			( map { { 'NODE_TYPE' => 'view_src_col', 'ATTRS' => $_ } } qw(
+			( map { { 'NODE_TYPE' => 'view_src_field', 'ATTRS' => $_ } } qw(
 				user_id public_name public_email web_url contact_net contact_phy bio plan comments
 			) ),
 		] },
 		{ 'NODE_TYPE' => 'view_join', 'ATTRS' => { 'lhs_src' => 'user_auth', 
-				'rhs_src' => 'user_profile', 'join_type' => 'LEFT', }, 'CHILDREN' => [ 
-			{ 'NODE_TYPE' => 'view_join_col', 'ATTRS' => { 'lhs_src_col' => 'user_id', 
-				'rhs_src_col' => 'user_id',  } },
+				'rhs_src' => 'user_profile', 'join_op' => 'LEFT', }, 'CHILDREN' => [ 
+			{ 'NODE_TYPE' => 'view_join_field', 'ATTRS' => { 'lhs_src_field' => 'user_id', 
+				'rhs_src_field' => 'user_id',  } },
 		] },
 		( map { { 'NODE_TYPE' => 'view_expr', 'ATTRS' => $_ } } (
-			{ 'view_part' => 'RESULT', 'set_result_col' => 'user_id'      , 'cont_type' => 'SCALAR', 'valf_src_col' => ['user_id'      ,'user_auth'   ], },
-			{ 'view_part' => 'RESULT', 'set_result_col' => 'login_name'   , 'cont_type' => 'SCALAR', 'valf_src_col' => ['login_name'   ,'user_auth'   ], },
-			{ 'view_part' => 'RESULT', 'set_result_col' => 'login_pass'   , 'cont_type' => 'SCALAR', 'valf_src_col' => ['login_pass'   ,'user_auth'   ], },
-			{ 'view_part' => 'RESULT', 'set_result_col' => 'private_name' , 'cont_type' => 'SCALAR', 'valf_src_col' => ['private_name' ,'user_auth'   ], },
-			{ 'view_part' => 'RESULT', 'set_result_col' => 'private_email', 'cont_type' => 'SCALAR', 'valf_src_col' => ['private_email','user_auth'   ], },
-			{ 'view_part' => 'RESULT', 'set_result_col' => 'may_login'    , 'cont_type' => 'SCALAR', 'valf_src_col' => ['may_login'    ,'user_auth'   ], },
-			{ 'view_part' => 'RESULT', 'set_result_col' => 'max_sessions' , 'cont_type' => 'SCALAR', 'valf_src_col' => ['max_sessions' ,'user_auth'   ], },
-			{ 'view_part' => 'RESULT', 'set_result_col' => 'public_name'  , 'cont_type' => 'SCALAR', 'valf_src_col' => ['public_name'  ,'user_profile'], },
-			{ 'view_part' => 'RESULT', 'set_result_col' => 'public_email' , 'cont_type' => 'SCALAR', 'valf_src_col' => ['public_email' ,'user_profile'], },
-			{ 'view_part' => 'RESULT', 'set_result_col' => 'web_url'      , 'cont_type' => 'SCALAR', 'valf_src_col' => ['web_url'      ,'user_profile'], },
-			{ 'view_part' => 'RESULT', 'set_result_col' => 'contact_net'  , 'cont_type' => 'SCALAR', 'valf_src_col' => ['contact_net'  ,'user_profile'], },
-			{ 'view_part' => 'RESULT', 'set_result_col' => 'contact_phy'  , 'cont_type' => 'SCALAR', 'valf_src_col' => ['contact_phy'  ,'user_profile'], },
-			{ 'view_part' => 'RESULT', 'set_result_col' => 'bio'          , 'cont_type' => 'SCALAR', 'valf_src_col' => ['bio'          ,'user_profile'], },
-			{ 'view_part' => 'RESULT', 'set_result_col' => 'plan'         , 'cont_type' => 'SCALAR', 'valf_src_col' => ['plan'         ,'user_profile'], },
-			{ 'view_part' => 'RESULT', 'set_result_col' => 'comments'     , 'cont_type' => 'SCALAR', 'valf_src_col' => ['comments'     ,'user_profile'], },
+			{ 'view_part' => 'RESULT', 'set_result_field' => 'user_id'      , 'cont_type' => 'SCALAR', 'valf_src_field' => ['user_id'      ,'user_auth'   ], },
+			{ 'view_part' => 'RESULT', 'set_result_field' => 'login_name'   , 'cont_type' => 'SCALAR', 'valf_src_field' => ['login_name'   ,'user_auth'   ], },
+			{ 'view_part' => 'RESULT', 'set_result_field' => 'login_pass'   , 'cont_type' => 'SCALAR', 'valf_src_field' => ['login_pass'   ,'user_auth'   ], },
+			{ 'view_part' => 'RESULT', 'set_result_field' => 'private_name' , 'cont_type' => 'SCALAR', 'valf_src_field' => ['private_name' ,'user_auth'   ], },
+			{ 'view_part' => 'RESULT', 'set_result_field' => 'private_email', 'cont_type' => 'SCALAR', 'valf_src_field' => ['private_email','user_auth'   ], },
+			{ 'view_part' => 'RESULT', 'set_result_field' => 'may_login'    , 'cont_type' => 'SCALAR', 'valf_src_field' => ['may_login'    ,'user_auth'   ], },
+			{ 'view_part' => 'RESULT', 'set_result_field' => 'max_sessions' , 'cont_type' => 'SCALAR', 'valf_src_field' => ['max_sessions' ,'user_auth'   ], },
+			{ 'view_part' => 'RESULT', 'set_result_field' => 'public_name'  , 'cont_type' => 'SCALAR', 'valf_src_field' => ['public_name'  ,'user_profile'], },
+			{ 'view_part' => 'RESULT', 'set_result_field' => 'public_email' , 'cont_type' => 'SCALAR', 'valf_src_field' => ['public_email' ,'user_profile'], },
+			{ 'view_part' => 'RESULT', 'set_result_field' => 'web_url'      , 'cont_type' => 'SCALAR', 'valf_src_field' => ['web_url'      ,'user_profile'], },
+			{ 'view_part' => 'RESULT', 'set_result_field' => 'contact_net'  , 'cont_type' => 'SCALAR', 'valf_src_field' => ['contact_net'  ,'user_profile'], },
+			{ 'view_part' => 'RESULT', 'set_result_field' => 'contact_phy'  , 'cont_type' => 'SCALAR', 'valf_src_field' => ['contact_phy'  ,'user_profile'], },
+			{ 'view_part' => 'RESULT', 'set_result_field' => 'bio'          , 'cont_type' => 'SCALAR', 'valf_src_field' => ['bio'          ,'user_profile'], },
+			{ 'view_part' => 'RESULT', 'set_result_field' => 'plan'         , 'cont_type' => 'SCALAR', 'valf_src_field' => ['plan'         ,'user_profile'], },
+			{ 'view_part' => 'RESULT', 'set_result_field' => 'comments'     , 'cont_type' => 'SCALAR', 'valf_src_field' => ['comments'     ,'user_profile'], },
 		) ),
 		{ 'NODE_TYPE' => 'view_expr', 'ATTRS' => { 'view_part' => 'WHERE', 
 				'cont_type' => 'SCALAR', 'valf_call_sroutine' => 'EQ', }, 'CHILDREN' => [ 
 			{ 'NODE_TYPE' => 'view_expr', 'ATTRS' => { 
-				'cont_type' => 'SCALAR', 'valf_src_col' => ['user_id','user_auth'], }, },
+				'cont_type' => 'SCALAR', 'valf_src_field' => ['user_id','user_auth'], }, },
 #			{ 'NODE_TYPE' => 'view_expr', 'ATTRS' => { 
-#				'cont_type' => 'SCALAR', 'routine_arg' => 'curr_uid', }, },
+#				'cont_type' => 'SCALAR', 'valf_p_routine_arg' => 'curr_uid', }, },
 		] },
 	] } );
 
-	$model->create_node_tree( { 'NODE_TYPE' => 'table', 
-			'ATTRS' => { 'name' => 'user_pref', }, 'CHILDREN' => [ 
-		( map { { 'NODE_TYPE' => 'table_col', 'ATTRS' => $_ } } (
-			{ 'name' => 'user_id'   , 'domain' => 'int'     , 'mandatory' => 1, },
-			{ 'name' => 'pref_name' , 'domain' => 'entitynm', 'mandatory' => 1, },
-			{ 'name' => 'pref_value', 'domain' => 'generic' , 'mandatory' => 0, },
+	$model->build_child_node_tree( { 'NODE_TYPE' => 'table', 
+			'ATTRS' => { 'name' => 'user_pref', 'row_data_type' => 'user_pref', }, 'CHILDREN' => [ 
+		( map { { 'NODE_TYPE' => 'table_field', 'ATTRS' => $_ } } (
+			{ 'row_field' => 'user_id'  , 'mandatory' => 1, },
+			{ 'row_field' => 'pref_name', 'mandatory' => 1, },
 		) ),
-		( map { { 'NODE_TYPE' => 'table_ind', 'ATTRS' => $_->[0], 'CHILDREN' => [ 
-				map { { 'NODE_TYPE' => 'table_ind_col', 'ATTRS' => $_ } } @{$_->[1]}
+		( map { { 'NODE_TYPE' => 'table_index', 'ATTRS' => $_->[0], 'CHILDREN' => [ 
+				map { { 'NODE_TYPE' => 'table_index_field', 'ATTRS' => $_ } } @{$_->[1]}
 				] } } (
-			[ { 'name' => 'primary', 'ind_type' => 'UNIQUE', }, [ 'user_id', 'pref_name', ], ], 
-			[ { 'name' => 'fk_user', 'ind_type' => 'FOREIGN', 'f_table' => 'user_auth', }, 
-				[ { 'table_col' => 'user_id', 'f_table_col' => 'user_id' }, ], ], 
+			[ { 'name' => 'primary', 'index_type' => 'UNIQUE', }, [ 'user_id', 'pref_name', ], ], 
+			[ { 'name' => 'fk_user', 'index_type' => 'FOREIGN', 'f_table' => 'user_auth', }, 
+				[ { 'field' => 'user_id', 'f_field' => 'user_id' }, ], ], 
 		) ),
 	] } );
 
-	$model->create_node_tree( { 'NODE_TYPE' => 'view', 
-			'ATTRS' => { 'name' => 'user_theme', 'view_type' => 'SINGLE', 'may_write' => 0, }, 'CHILDREN' => [ 
-		( map { { 'NODE_TYPE' => 'view_col', 'ATTRS' => $_ } } (
-			{ 'name' => 'theme_name' , 'domain' => 'generic', },
-			{ 'name' => 'theme_count', 'domain' => 'int'    , },
-		) ),
+	$model->build_child_node_tree( { 'NODE_TYPE' => 'view', 
+			'ATTRS' => { 'name' => 'user_theme', 'row_data_type' => 'user_theme', 'may_write' => 0, }, 'CHILDREN' => [ 
 		{ 'NODE_TYPE' => 'view_src', 'ATTRS' => { 'name' => 'user_pref', 'match_table' => 'user_pref', }, 
-			'CHILDREN' => [ map { { 'NODE_TYPE' => 'view_src_col', 'ATTRS' => $_ } } qw( pref_name pref_value ) ] 
+			'CHILDREN' => [ map { { 'NODE_TYPE' => 'view_src_field', 'ATTRS' => $_ } } qw( pref_name pref_value ) ] 
 		},
 		{ 'NODE_TYPE' => 'view_expr', 'ATTRS' => { 'view_part' => 'RESULT', 
-			'set_result_col' => 'theme_name', 'cont_type' => 'SCALAR', 'valf_src_col' => ['pref_value','user_pref'], }, },
+			'set_result_field' => 'theme_name', 'cont_type' => 'SCALAR', 'valf_src_field' => ['pref_value','user_pref'], }, },
 		{ 'NODE_TYPE' => 'view_expr', 'ATTRS' => { 'view_part' => 'RESULT', 
-				'set_result_col' => 'theme_count', 'cont_type' => 'SCALAR', 'valf_call_sroutine' => 'COUNT', }, 'CHILDREN' => [ 
+				'set_result_field' => 'theme_count', 'cont_type' => 'SCALAR', 'valf_call_sroutine' => 'COUNT', }, 'CHILDREN' => [ 
 			{ 'NODE_TYPE' => 'view_expr', 'ATTRS' => { 
-				'cont_type' => 'SCALAR', 'valf_src_col' => ['pref_value','user_pref'], }, },
+				'cont_type' => 'SCALAR', 'valf_src_field' => ['pref_value','user_pref'], }, },
 		] },
 		{ 'NODE_TYPE' => 'view_expr', 'ATTRS' => { 'view_part' => 'WHERE', 
 				'cont_type' => 'SCALAR', 'valf_call_sroutine' => 'EQ', }, 'CHILDREN' => [ 
 			{ 'NODE_TYPE' => 'view_expr', 'ATTRS' => { 
-				'cont_type' => 'SCALAR', 'valf_src_col' => ['pref_name','user_pref'], }, },
+				'cont_type' => 'SCALAR', 'valf_src_field' => ['pref_name','user_pref'], }, },
 			{ 'NODE_TYPE' => 'view_expr', 'ATTRS' => { 
-				'cont_type' => 'SCALAR', 'domain' => 'str30', 'valf_literal' => 'theme', }, },
+				'cont_type' => 'SCALAR', 'scalar_data_type' => 'str30', 'valf_literal' => 'theme', }, },
 		] },
 		{ 'NODE_TYPE' => 'view_expr', 'ATTRS' => { 'view_part' => 'GROUP', 
-			'cont_type' => 'SCALAR', 'valf_src_col' => ['pref_value','user_pref'], }, },
+			'cont_type' => 'SCALAR', 'valf_src_field' => ['pref_value','user_pref'], }, },
 		{ 'NODE_TYPE' => 'view_expr', 'ATTRS' => { 'view_part' => 'HAVING', 
 				'cont_type' => 'SCALAR', 'valf_call_sroutine' => 'GT', }, 'CHILDREN' => [ 
 			{ 'NODE_TYPE' => 'view_expr', 'ATTRS' => { 
 				'cont_type' => 'SCALAR', 'valf_call_sroutine' => 'COUNT', }, },
 			{ 'NODE_TYPE' => 'view_expr', 'ATTRS' => { 
-				'cont_type' => 'SCALAR', 'domain' => 'int', 'valf_literal' => '1', }, },
+				'cont_type' => 'SCALAR', 'scalar_data_type' => 'int', 'valf_literal' => '1', }, },
 		] },
 	] } );
+
+	##### NEXT SET APPLICATION BLUEPRINT-TYPE DETAILS #####
+
+	# ... TODO ...
+
+	##### NEXT SET PRODUCT-TYPE DETAILS #####
+
+	# ... TODO ...
+
+	##### NEXT SET INSTANCE-TYPE DETAILS #####
+
+	# ... TODO ...
+
+	##### END OF DETAILS SETTING #####
+
+	# Now check that we didn't omit something important:
+	$model->assert_deferrable_constraints();
 
 	return( $model );
 }
@@ -299,231 +364,260 @@ sub create_and_populate_model {
 sub expected_model_xml_output {
 	return(
 '<root>
+	<elements>
+		<scalar_data_type id="1" name="bin1k" base_type="STR_BIT" max_octets="1000" />
+		<scalar_data_type id="2" name="bin32k" base_type="STR_BIT" max_octets="32000" />
+		<scalar_data_type id="3" name="str4" base_type="STR_CHAR" max_chars="4" store_fixed="1" char_enc="ASCII" trim_white="1" uc_latin="1" pad_char=" " trim_pad="1" />
+		<scalar_data_type id="4" name="str10" base_type="STR_CHAR" max_chars="10" store_fixed="1" char_enc="ASCII" trim_white="1" pad_char=" " trim_pad="1" />
+		<scalar_data_type id="5" name="str30" base_type="STR_CHAR" max_chars="30" char_enc="ASCII" trim_white="1" />
+		<scalar_data_type id="6" name="str2k" base_type="STR_CHAR" max_chars="2000" char_enc="UTF8" />
+		<scalar_data_type id="7" name="byte" base_type="NUM_INT" num_precision="3" />
+		<scalar_data_type id="8" name="short" base_type="NUM_INT" num_precision="5" />
+		<scalar_data_type id="9" name="int" base_type="NUM_INT" num_precision="10" />
+		<scalar_data_type id="10" name="long" base_type="NUM_INT" num_precision="19" />
+		<scalar_data_type id="11" name="ubyte" base_type="NUM_INT" num_precision="3" num_unsigned="1" />
+		<scalar_data_type id="12" name="ushort" base_type="NUM_INT" num_precision="5" num_unsigned="1" />
+		<scalar_data_type id="13" name="uint" base_type="NUM_INT" num_precision="10" num_unsigned="1" />
+		<scalar_data_type id="14" name="ulong" base_type="NUM_INT" num_precision="19" num_unsigned="1" />
+		<scalar_data_type id="15" name="float" base_type="NUM_APR" num_octets="4" />
+		<scalar_data_type id="16" name="double" base_type="NUM_APR" num_octets="8" />
+		<scalar_data_type id="17" name="dec10p2" base_type="NUM_EXA" num_precision="10" num_scale="2" />
+		<scalar_data_type id="18" name="dec255" base_type="NUM_EXA" num_precision="255" />
+		<scalar_data_type id="19" name="boolean" base_type="BOOLEAN" />
+		<scalar_data_type id="20" name="datetime" base_type="DATM_FULL" calendar="ABS" />
+		<scalar_data_type id="21" name="dtchines" base_type="DATM_FULL" calendar="CHI" />
+		<scalar_data_type id="22" name="sex" base_type="STR_CHAR" max_chars="1" char_enc="ASCII" />
+		<scalar_data_type id="23" name="str20" base_type="STR_CHAR" max_chars="20" char_enc="ASCII" />
+		<scalar_data_type id="24" name="str100" base_type="STR_CHAR" max_chars="100" char_enc="ASCII" />
+		<scalar_data_type id="25" name="str250" base_type="STR_CHAR" max_chars="250" char_enc="ASCII" />
+		<scalar_data_type id="26" name="entitynm" base_type="STR_CHAR" max_chars="30" char_enc="ASCII" />
+		<scalar_data_type id="27" name="generic" base_type="STR_CHAR" max_chars="250" char_enc="ASCII" />
+		<row_data_type id="1" name="person">
+			<row_data_type_field id="1" pp_row_data_type="1" name="person_id" scalar_data_type="9" />
+			<row_data_type_field id="2" pp_row_data_type="1" name="alternate_id" scalar_data_type="23" />
+			<row_data_type_field id="3" pp_row_data_type="1" name="name" scalar_data_type="24" />
+			<row_data_type_field id="4" pp_row_data_type="1" name="sex" scalar_data_type="22" />
+			<row_data_type_field id="5" pp_row_data_type="1" name="father_id" scalar_data_type="9" />
+			<row_data_type_field id="6" pp_row_data_type="1" name="mother_id" scalar_data_type="9" />
+		</row_data_type>
+		<row_data_type id="2" name="person_with_parents">
+			<row_data_type_field id="7" pp_row_data_type="2" name="self_id" scalar_data_type="9" />
+			<row_data_type_field id="8" pp_row_data_type="2" name="self_name" scalar_data_type="24" />
+			<row_data_type_field id="9" pp_row_data_type="2" name="father_id" scalar_data_type="9" />
+			<row_data_type_field id="10" pp_row_data_type="2" name="father_name" scalar_data_type="24" />
+			<row_data_type_field id="11" pp_row_data_type="2" name="mother_id" scalar_data_type="9" />
+			<row_data_type_field id="12" pp_row_data_type="2" name="mother_name" scalar_data_type="24" />
+		</row_data_type>
+		<row_data_type id="3" name="user_auth">
+			<row_data_type_field id="13" pp_row_data_type="3" name="user_id" scalar_data_type="9" />
+			<row_data_type_field id="14" pp_row_data_type="3" name="login_name" scalar_data_type="23" />
+			<row_data_type_field id="15" pp_row_data_type="3" name="login_pass" scalar_data_type="23" />
+			<row_data_type_field id="16" pp_row_data_type="3" name="private_name" scalar_data_type="24" />
+			<row_data_type_field id="17" pp_row_data_type="3" name="private_email" scalar_data_type="24" />
+			<row_data_type_field id="18" pp_row_data_type="3" name="may_login" scalar_data_type="19" />
+			<row_data_type_field id="19" pp_row_data_type="3" name="max_sessions" scalar_data_type="7" />
+		</row_data_type>
+		<row_data_type id="4" name="user_profile">
+			<row_data_type_field id="20" pp_row_data_type="4" name="user_id" scalar_data_type="9" />
+			<row_data_type_field id="21" pp_row_data_type="4" name="public_name" scalar_data_type="25" />
+			<row_data_type_field id="22" pp_row_data_type="4" name="public_email" scalar_data_type="25" />
+			<row_data_type_field id="23" pp_row_data_type="4" name="web_url" scalar_data_type="25" />
+			<row_data_type_field id="24" pp_row_data_type="4" name="contact_net" scalar_data_type="25" />
+			<row_data_type_field id="25" pp_row_data_type="4" name="contact_phy" scalar_data_type="25" />
+			<row_data_type_field id="26" pp_row_data_type="4" name="bio" scalar_data_type="25" />
+			<row_data_type_field id="27" pp_row_data_type="4" name="plan" scalar_data_type="25" />
+			<row_data_type_field id="28" pp_row_data_type="4" name="comments" scalar_data_type="25" />
+		</row_data_type>
+		<row_data_type id="5" name="user">
+			<row_data_type_field id="29" pp_row_data_type="5" name="user_id" scalar_data_type="9" />
+			<row_data_type_field id="30" pp_row_data_type="5" name="login_name" scalar_data_type="23" />
+			<row_data_type_field id="31" pp_row_data_type="5" name="login_pass" scalar_data_type="23" />
+			<row_data_type_field id="32" pp_row_data_type="5" name="private_name" scalar_data_type="24" />
+			<row_data_type_field id="33" pp_row_data_type="5" name="private_email" scalar_data_type="24" />
+			<row_data_type_field id="34" pp_row_data_type="5" name="may_login" scalar_data_type="19" />
+			<row_data_type_field id="35" pp_row_data_type="5" name="max_sessions" scalar_data_type="7" />
+			<row_data_type_field id="36" pp_row_data_type="5" name="public_name" scalar_data_type="25" />
+			<row_data_type_field id="37" pp_row_data_type="5" name="public_email" scalar_data_type="25" />
+			<row_data_type_field id="38" pp_row_data_type="5" name="web_url" scalar_data_type="25" />
+			<row_data_type_field id="39" pp_row_data_type="5" name="contact_net" scalar_data_type="25" />
+			<row_data_type_field id="40" pp_row_data_type="5" name="contact_phy" scalar_data_type="25" />
+			<row_data_type_field id="41" pp_row_data_type="5" name="bio" scalar_data_type="25" />
+			<row_data_type_field id="42" pp_row_data_type="5" name="plan" scalar_data_type="25" />
+			<row_data_type_field id="43" pp_row_data_type="5" name="comments" scalar_data_type="25" />
+		</row_data_type>
+		<row_data_type id="6" name="user_pref">
+			<row_data_type_field id="44" pp_row_data_type="6" name="user_id" scalar_data_type="9" />
+			<row_data_type_field id="45" pp_row_data_type="6" name="pref_name" scalar_data_type="26" />
+			<row_data_type_field id="46" pp_row_data_type="6" name="pref_value" scalar_data_type="27" />
+		</row_data_type>
+		<row_data_type id="7" name="user_theme">
+			<row_data_type_field id="47" pp_row_data_type="7" name="theme_name" scalar_data_type="27" />
+			<row_data_type_field id="48" pp_row_data_type="7" name="theme_count" scalar_data_type="9" />
+		</row_data_type>
+	</elements>
 	<blueprints>
 		<catalog id="1" name="The Catalog Blueprint">
-			<owner id="1" catalog="1" />
-			<schema id="1" catalog="1" name="data" owner="1">
-				<domain id="1" schema="1" name="bin1k" base_type="STR_BIT" max_octets="1000" />
-				<domain id="2" schema="1" name="bin32k" base_type="STR_BIT" max_octets="32000" />
-				<domain id="3" schema="1" name="str4" base_type="STR_CHAR" max_chars="4" store_fixed="1" char_enc="ASCII" trim_white="1" uc_latin="1" pad_char=" " trim_pad="1" />
-				<domain id="4" schema="1" name="str10" base_type="STR_CHAR" max_chars="10" store_fixed="1" char_enc="ASCII" trim_white="1" pad_char=" " trim_pad="1" />
-				<domain id="5" schema="1" name="str30" base_type="STR_CHAR" max_chars="30" char_enc="ASCII" trim_white="1" />
-				<domain id="6" schema="1" name="str2k" base_type="STR_CHAR" max_chars="2000" char_enc="UTF8" />
-				<domain id="7" schema="1" name="byte" base_type="NUM_INT" num_precision="3" />
-				<domain id="8" schema="1" name="short" base_type="NUM_INT" num_precision="5" />
-				<domain id="9" schema="1" name="int" base_type="NUM_INT" num_precision="10" />
-				<domain id="10" schema="1" name="long" base_type="NUM_INT" num_precision="19" />
-				<domain id="11" schema="1" name="ubyte" base_type="NUM_INT" num_precision="3" num_unsigned="1" />
-				<domain id="12" schema="1" name="ushort" base_type="NUM_INT" num_precision="5" num_unsigned="1" />
-				<domain id="13" schema="1" name="uint" base_type="NUM_INT" num_precision="10" num_unsigned="1" />
-				<domain id="14" schema="1" name="ulong" base_type="NUM_INT" num_precision="19" num_unsigned="1" />
-				<domain id="15" schema="1" name="float" base_type="NUM_APR" num_octets="4" />
-				<domain id="16" schema="1" name="double" base_type="NUM_APR" num_octets="8" />
-				<domain id="17" schema="1" name="dec10p2" base_type="NUM_EXA" num_precision="10" num_scale="2" />
-				<domain id="18" schema="1" name="dec255" base_type="NUM_EXA" num_precision="255" />
-				<domain id="19" schema="1" name="boolean" base_type="BOOLEAN" />
-				<domain id="20" schema="1" name="datetime" base_type="DATM_FULL" calendar="ABS" />
-				<domain id="21" schema="1" name="dtchines" base_type="DATM_FULL" calendar="CHI" />
-				<domain id="22" schema="1" name="sex" base_type="STR_CHAR" max_chars="1" char_enc="ASCII" />
-				<domain id="23" schema="1" name="str20" base_type="STR_CHAR" max_chars="20" char_enc="ASCII" />
-				<domain id="24" schema="1" name="str100" base_type="STR_CHAR" max_chars="100" char_enc="ASCII" />
-				<domain id="25" schema="1" name="str250" base_type="STR_CHAR" max_chars="250" char_enc="ASCII" />
-				<domain id="26" schema="1" name="entitynm" base_type="STR_CHAR" max_chars="30" char_enc="ASCII" />
-				<domain id="27" schema="1" name="generic" base_type="STR_CHAR" max_chars="250" char_enc="ASCII" />
-				<table id="1" schema="1" name="person">
-					<table_col id="1" table="1" name="person_id" domain="9" mandatory="1" default_val="1" auto_inc="1" />
-					<table_col id="2" table="1" name="alternate_id" domain="23" mandatory="0" />
-					<table_col id="3" table="1" name="name" domain="24" mandatory="1" />
-					<table_col id="4" table="1" name="sex" domain="22" mandatory="0" />
-					<table_col id="5" table="1" name="father_id" domain="9" mandatory="0" />
-					<table_col id="6" table="1" name="mother_id" domain="9" mandatory="0" />
-					<table_ind id="1" table="1" name="primary" ind_type="UNIQUE">
-						<table_ind_col id="1" table_ind="1" table_col="1" />
-					</table_ind>
-					<table_ind id="2" table="1" name="ak_alternate_id" ind_type="UNIQUE">
-						<table_ind_col id="2" table_ind="2" table_col="2" />
-					</table_ind>
-					<table_ind id="3" table="1" name="fk_father" ind_type="FOREIGN" f_table="1">
-						<table_ind_col id="3" table_ind="3" table_col="5" f_table_col="1" />
-					</table_ind>
-					<table_ind id="4" table="1" name="fk_mother" ind_type="FOREIGN" f_table="1">
-						<table_ind_col id="4" table_ind="4" table_col="6" f_table_col="1" />
-					</table_ind>
+			<owner id="1" pp_catalog="1" />
+			<schema id="1" pp_catalog="1" name="data" owner="1">
+				<table id="1" pp_schema="1" name="person" row_data_type="1">
+					<table_field id="1" pp_table="1" row_field="1" mandatory="1" default_val="1" auto_inc="1" />
+					<table_field id="2" pp_table="1" row_field="3" mandatory="1" />
+					<table_index id="1" pp_table="1" name="primary" index_type="UNIQUE">
+						<table_index_field id="1" pp_table_index="1" field="1" />
+					</table_index>
+					<table_index id="2" pp_table="1" name="ak_alternate_id" index_type="UNIQUE">
+						<table_index_field id="2" pp_table_index="2" field="2" />
+					</table_index>
+					<table_index id="3" pp_table="1" name="fk_father" index_type="FOREIGN" f_table="1">
+						<table_index_field id="3" pp_table_index="3" field="5" f_field="1" />
+					</table_index>
+					<table_index id="4" pp_table="1" name="fk_mother" index_type="FOREIGN" f_table="1">
+						<table_index_field id="4" pp_table_index="4" field="6" f_field="1" />
+					</table_index>
 				</table>
-				<view id="1" schema="1" name="person_vw" view_type="MATCH" may_write="1">
-					<view_src id="1" view="1" name="person" match_table="1" />
-				</view>
-				<view id="2" schema="1" name="person_with_parents" view_type="MULTIPLE" may_write="0">
-					<view_col id="1" view="2" name="self_id" domain="9" />
-					<view_col id="2" view="2" name="self_name" domain="24" />
-					<view_col id="3" view="2" name="father_id" domain="9" />
-					<view_col id="4" view="2" name="father_name" domain="24" />
-					<view_col id="5" view="2" name="mother_id" domain="9" />
-					<view_col id="6" view="2" name="mother_name" domain="24" />
-					<view_src id="2" view="2" name="self" match_table="1">
-						<view_src_col id="1" src="2" match_table_col="1" />
-						<view_src_col id="2" src="2" match_table_col="3" />
-						<view_src_col id="3" src="2" match_table_col="5" />
-						<view_src_col id="4" src="2" match_table_col="6" />
-					</view_src>
-					<view_src id="3" view="2" name="father" match_table="1">
-						<view_src_col id="5" src="3" match_table_col="1" />
-						<view_src_col id="6" src="3" match_table_col="3" />
-					</view_src>
-					<view_src id="4" view="2" name="mother" match_table="1">
-						<view_src_col id="7" src="4" match_table_col="1" />
-						<view_src_col id="8" src="4" match_table_col="3" />
-					</view_src>
-					<view_join id="1" view="2" lhs_src="2" rhs_src="3" join_type="LEFT">
-						<view_join_col id="1" join="1" lhs_src_col="3" rhs_src_col="5" />
-					</view_join>
-					<view_join id="2" view="2" lhs_src="2" rhs_src="4" join_type="LEFT">
-						<view_join_col id="2" join="2" lhs_src_col="4" rhs_src_col="7" />
-					</view_join>
-					<view_expr id="1" view="2" view_part="RESULT" set_result_col="1" cont_type="SCALAR" valf_src_col="1" />
-					<view_expr id="2" view="2" view_part="RESULT" set_result_col="2" cont_type="SCALAR" valf_src_col="2" />
-					<view_expr id="3" view="2" view_part="RESULT" set_result_col="3" cont_type="SCALAR" valf_src_col="5" />
-					<view_expr id="4" view="2" view_part="RESULT" set_result_col="4" cont_type="SCALAR" valf_src_col="6" />
-					<view_expr id="5" view="2" view_part="RESULT" set_result_col="5" cont_type="SCALAR" valf_src_col="7" />
-					<view_expr id="6" view="2" view_part="RESULT" set_result_col="6" cont_type="SCALAR" valf_src_col="8" />
-					<view_expr id="7" view="2" view_part="WHERE" cont_type="SCALAR" valf_call_sroutine="AND">
-						<view_expr id="8" p_expr="7" cont_type="SCALAR" valf_call_sroutine="LIKE">
-							<view_expr id="9" p_expr="8" cont_type="SCALAR" valf_src_col="6" />
+				<view id="1" pp_schema="1" name="person_vw" view_type="ALIAS" row_data_type="1" may_write="1">
+					<view_src id="1" pp_view="1" name="person" match_table="1" />
+					<view id="2" pp_view="1" name="person_with_parents" view_type="JOINED" row_data_type="2" may_write="0">
+						<view_src id="2" pp_view="2" name="self" match_table="1">
+							<view_src_field id="1" pp_src="2" match_field="1" />
+							<view_src_field id="2" pp_src="2" match_field="3" />
+							<view_src_field id="3" pp_src="2" match_field="5" />
+							<view_src_field id="4" pp_src="2" match_field="6" />
+						</view_src>
+						<view_src id="3" pp_view="2" name="father" match_table="1">
+							<view_src_field id="5" pp_src="3" match_field="1" />
+							<view_src_field id="6" pp_src="3" match_field="3" />
+						</view_src>
+						<view_src id="4" pp_view="2" name="mother" match_table="1">
+							<view_src_field id="7" pp_src="4" match_field="1" />
+							<view_src_field id="8" pp_src="4" match_field="3" />
+						</view_src>
+						<view_join id="1" pp_view="2" lhs_src="2" rhs_src="3" join_op="LEFT">
+							<view_join_field id="1" pp_join="1" lhs_src_field="3" rhs_src_field="5" />
+						</view_join>
+						<view_join id="2" pp_view="2" lhs_src="2" rhs_src="4" join_op="LEFT">
+							<view_join_field id="2" pp_join="2" lhs_src_field="4" rhs_src_field="7" />
+						</view_join>
+						<view_expr id="1" pp_view="2" view_part="RESULT" set_result_field="7" cont_type="SCALAR" valf_src_field="1" />
+						<view_expr id="2" pp_view="2" view_part="RESULT" set_result_field="8" cont_type="SCALAR" valf_src_field="2" />
+						<view_expr id="3" pp_view="2" view_part="RESULT" set_result_field="9" cont_type="SCALAR" valf_src_field="5" />
+						<view_expr id="4" pp_view="2" view_part="RESULT" set_result_field="10" cont_type="SCALAR" valf_src_field="6" />
+						<view_expr id="5" pp_view="2" view_part="RESULT" set_result_field="11" cont_type="SCALAR" valf_src_field="7" />
+						<view_expr id="6" pp_view="2" view_part="RESULT" set_result_field="12" cont_type="SCALAR" valf_src_field="8" />
+						<view_expr id="7" pp_view="2" view_part="WHERE" cont_type="SCALAR" valf_call_sroutine="AND">
+							<view_expr id="8" pp_expr="7" cont_type="SCALAR" valf_call_sroutine="LIKE">
+								<view_expr id="9" pp_expr="8" cont_type="SCALAR" valf_src_field="6" />
+							</view_expr>
+							<view_expr id="10" pp_expr="7" cont_type="SCALAR" valf_call_sroutine="LIKE">
+								<view_expr id="11" pp_expr="10" cont_type="SCALAR" valf_src_field="8" />
+							</view_expr>
 						</view_expr>
-						<view_expr id="10" p_expr="7" cont_type="SCALAR" valf_call_sroutine="LIKE">
-							<view_expr id="11" p_expr="10" cont_type="SCALAR" valf_src_col="8" />
-						</view_expr>
-					</view_expr>
+						<view id="3" pp_view="2" name="user" view_type="JOINED" row_data_type="5" may_write="1">
+							<view_src id="5" pp_view="3" name="user_auth" match_table="2">
+								<view_src_field id="9" pp_src="5" match_field="13" />
+								<view_src_field id="10" pp_src="5" match_field="14" />
+								<view_src_field id="11" pp_src="5" match_field="15" />
+								<view_src_field id="12" pp_src="5" match_field="16" />
+								<view_src_field id="13" pp_src="5" match_field="17" />
+								<view_src_field id="14" pp_src="5" match_field="18" />
+								<view_src_field id="15" pp_src="5" match_field="19" />
+							</view_src>
+							<view_src id="6" pp_view="3" name="user_profile" match_table="3">
+								<view_src_field id="16" pp_src="6" match_field="20" />
+								<view_src_field id="17" pp_src="6" match_field="21" />
+								<view_src_field id="18" pp_src="6" match_field="22" />
+								<view_src_field id="19" pp_src="6" match_field="23" />
+								<view_src_field id="20" pp_src="6" match_field="24" />
+								<view_src_field id="21" pp_src="6" match_field="25" />
+								<view_src_field id="22" pp_src="6" match_field="26" />
+								<view_src_field id="23" pp_src="6" match_field="27" />
+								<view_src_field id="24" pp_src="6" match_field="28" />
+							</view_src>
+							<view_join id="3" pp_view="3" lhs_src="5" rhs_src="6" join_op="LEFT">
+								<view_join_field id="3" pp_join="3" lhs_src_field="9" rhs_src_field="16" />
+							</view_join>
+							<view_expr id="12" pp_view="3" view_part="RESULT" set_result_field="29" cont_type="SCALAR" valf_src_field="9" />
+							<view_expr id="13" pp_view="3" view_part="RESULT" set_result_field="30" cont_type="SCALAR" valf_src_field="10" />
+							<view_expr id="14" pp_view="3" view_part="RESULT" set_result_field="31" cont_type="SCALAR" valf_src_field="11" />
+							<view_expr id="15" pp_view="3" view_part="RESULT" set_result_field="32" cont_type="SCALAR" valf_src_field="12" />
+							<view_expr id="16" pp_view="3" view_part="RESULT" set_result_field="33" cont_type="SCALAR" valf_src_field="13" />
+							<view_expr id="17" pp_view="3" view_part="RESULT" set_result_field="34" cont_type="SCALAR" valf_src_field="14" />
+							<view_expr id="18" pp_view="3" view_part="RESULT" set_result_field="35" cont_type="SCALAR" valf_src_field="15" />
+							<view_expr id="19" pp_view="3" view_part="RESULT" set_result_field="36" cont_type="SCALAR" valf_src_field="17" />
+							<view_expr id="20" pp_view="3" view_part="RESULT" set_result_field="37" cont_type="SCALAR" valf_src_field="18" />
+							<view_expr id="21" pp_view="3" view_part="RESULT" set_result_field="38" cont_type="SCALAR" valf_src_field="19" />
+							<view_expr id="22" pp_view="3" view_part="RESULT" set_result_field="39" cont_type="SCALAR" valf_src_field="20" />
+							<view_expr id="23" pp_view="3" view_part="RESULT" set_result_field="40" cont_type="SCALAR" valf_src_field="21" />
+							<view_expr id="24" pp_view="3" view_part="RESULT" set_result_field="41" cont_type="SCALAR" valf_src_field="22" />
+							<view_expr id="25" pp_view="3" view_part="RESULT" set_result_field="42" cont_type="SCALAR" valf_src_field="23" />
+							<view_expr id="26" pp_view="3" view_part="RESULT" set_result_field="43" cont_type="SCALAR" valf_src_field="24" />
+							<view_expr id="27" pp_view="3" view_part="WHERE" cont_type="SCALAR" valf_call_sroutine="EQ">
+								<view_expr id="28" pp_expr="27" cont_type="SCALAR" valf_src_field="9" />
+							</view_expr>
+							<view id="4" pp_view="3" name="user_theme" view_type="JOINED" row_data_type="7" may_write="0">
+								<view_src id="7" pp_view="4" name="user_pref" match_table="4">
+									<view_src_field id="25" pp_src="7" match_field="45" />
+									<view_src_field id="26" pp_src="7" match_field="46" />
+								</view_src>
+								<view_expr id="29" pp_view="4" view_part="RESULT" set_result_field="47" cont_type="SCALAR" valf_src_field="26" />
+								<view_expr id="30" pp_view="4" view_part="RESULT" set_result_field="48" cont_type="SCALAR" valf_call_sroutine="COUNT">
+									<view_expr id="31" pp_expr="30" cont_type="SCALAR" valf_src_field="26" />
+								</view_expr>
+								<view_expr id="32" pp_view="4" view_part="WHERE" cont_type="SCALAR" valf_call_sroutine="EQ">
+									<view_expr id="33" pp_expr="32" cont_type="SCALAR" valf_src_field="25" />
+									<view_expr id="34" pp_expr="32" cont_type="SCALAR" valf_literal="theme" scalar_data_type="5" />
+								</view_expr>
+								<view_expr id="35" pp_view="4" view_part="GROUP" cont_type="SCALAR" valf_src_field="26" />
+								<view_expr id="36" pp_view="4" view_part="HAVING" cont_type="SCALAR" valf_call_sroutine="GT">
+									<view_expr id="37" pp_expr="36" cont_type="SCALAR" valf_call_sroutine="COUNT" />
+									<view_expr id="38" pp_expr="36" cont_type="SCALAR" valf_literal="1" scalar_data_type="9" />
+								</view_expr>
+							</view>
+						</view>
+					</view>
 				</view>
-				<table id="2" schema="1" name="user_auth">
-					<table_col id="7" table="2" name="user_id" domain="9" mandatory="1" default_val="1" auto_inc="1" />
-					<table_col id="8" table="2" name="login_name" domain="23" mandatory="1" />
-					<table_col id="9" table="2" name="login_pass" domain="23" mandatory="1" />
-					<table_col id="10" table="2" name="private_name" domain="24" mandatory="1" />
-					<table_col id="11" table="2" name="private_email" domain="24" mandatory="1" />
-					<table_col id="12" table="2" name="may_login" domain="19" mandatory="1" />
-					<table_col id="13" table="2" name="max_sessions" domain="7" mandatory="1" default_val="3" />
-					<table_ind id="5" table="2" name="primary" ind_type="UNIQUE">
-						<table_ind_col id="5" table_ind="5" table_col="7" />
-					</table_ind>
-					<table_ind id="6" table="2" name="ak_login_name" ind_type="UNIQUE">
-						<table_ind_col id="6" table_ind="6" table_col="8" />
-					</table_ind>
-					<table_ind id="7" table="2" name="ak_private_email" ind_type="UNIQUE">
-						<table_ind_col id="7" table_ind="7" table_col="11" />
-					</table_ind>
+				<table id="2" pp_schema="1" name="user_auth" row_data_type="3">
+					<table_field id="3" pp_table="2" row_field="13" mandatory="1" default_val="1" auto_inc="1" />
+					<table_field id="4" pp_table="2" row_field="14" mandatory="1" />
+					<table_field id="5" pp_table="2" row_field="15" mandatory="1" />
+					<table_field id="6" pp_table="2" row_field="16" mandatory="1" />
+					<table_field id="7" pp_table="2" row_field="17" mandatory="1" />
+					<table_field id="8" pp_table="2" row_field="18" mandatory="1" />
+					<table_field id="9" pp_table="2" row_field="19" mandatory="1" default_val="3" />
+					<table_index id="5" pp_table="2" name="primary" index_type="UNIQUE">
+						<table_index_field id="5" pp_table_index="5" field="13" />
+					</table_index>
+					<table_index id="6" pp_table="2" name="ak_login_name" index_type="UNIQUE">
+						<table_index_field id="6" pp_table_index="6" field="14" />
+					</table_index>
+					<table_index id="7" pp_table="2" name="ak_private_email" index_type="UNIQUE">
+						<table_index_field id="7" pp_table_index="7" field="17" />
+					</table_index>
 				</table>
-				<table id="3" schema="1" name="user_profile">
-					<table_col id="14" table="3" name="user_id" domain="9" mandatory="1" />
-					<table_col id="15" table="3" name="public_name" domain="25" mandatory="1" />
-					<table_col id="16" table="3" name="public_email" domain="25" mandatory="0" />
-					<table_col id="17" table="3" name="web_url" domain="25" mandatory="0" />
-					<table_col id="18" table="3" name="contact_net" domain="25" mandatory="0" />
-					<table_col id="19" table="3" name="contact_phy" domain="25" mandatory="0" />
-					<table_col id="20" table="3" name="bio" domain="25" mandatory="0" />
-					<table_col id="21" table="3" name="plan" domain="25" mandatory="0" />
-					<table_col id="22" table="3" name="comments" domain="25" mandatory="0" />
-					<table_ind id="8" table="3" name="primary" ind_type="UNIQUE">
-						<table_ind_col id="8" table_ind="8" table_col="14" />
-					</table_ind>
-					<table_ind id="9" table="3" name="ak_public_name" ind_type="UNIQUE">
-						<table_ind_col id="9" table_ind="9" table_col="15" />
-					</table_ind>
-					<table_ind id="10" table="3" name="fk_user" ind_type="FOREIGN" f_table="2">
-						<table_ind_col id="10" table_ind="10" table_col="14" f_table_col="7" />
-					</table_ind>
+				<table id="3" pp_schema="1" name="user_profile" row_data_type="4">
+					<table_field id="10" pp_table="3" row_field="20" mandatory="1" />
+					<table_field id="11" pp_table="3" row_field="21" mandatory="1" />
+					<table_index id="8" pp_table="3" name="primary" index_type="UNIQUE">
+						<table_index_field id="8" pp_table_index="8" field="20" />
+					</table_index>
+					<table_index id="9" pp_table="3" name="ak_public_name" index_type="UNIQUE">
+						<table_index_field id="9" pp_table_index="9" field="21" />
+					</table_index>
+					<table_index id="10" pp_table="3" name="fk_user" index_type="FOREIGN" f_table="2">
+						<table_index_field id="10" pp_table_index="10" field="20" f_field="13" />
+					</table_index>
 				</table>
-				<view id="3" schema="1" name="user" view_type="MULTIPLE" may_write="1">
-					<view_col id="7" view="3" name="user_id" domain="9" />
-					<view_col id="8" view="3" name="login_name" domain="23" />
-					<view_col id="9" view="3" name="login_pass" domain="23" />
-					<view_col id="10" view="3" name="private_name" domain="24" />
-					<view_col id="11" view="3" name="private_email" domain="24" />
-					<view_col id="12" view="3" name="may_login" domain="19" />
-					<view_col id="13" view="3" name="max_sessions" domain="7" />
-					<view_col id="14" view="3" name="public_name" domain="25" />
-					<view_col id="15" view="3" name="public_email" domain="25" />
-					<view_col id="16" view="3" name="web_url" domain="25" />
-					<view_col id="17" view="3" name="contact_net" domain="25" />
-					<view_col id="18" view="3" name="contact_phy" domain="25" />
-					<view_col id="19" view="3" name="bio" domain="25" />
-					<view_col id="20" view="3" name="plan" domain="25" />
-					<view_col id="21" view="3" name="comments" domain="25" />
-					<view_src id="5" view="3" name="user_auth" match_table="2">
-						<view_src_col id="9" src="5" match_table_col="7" />
-						<view_src_col id="10" src="5" match_table_col="8" />
-						<view_src_col id="11" src="5" match_table_col="9" />
-						<view_src_col id="12" src="5" match_table_col="10" />
-						<view_src_col id="13" src="5" match_table_col="11" />
-						<view_src_col id="14" src="5" match_table_col="12" />
-						<view_src_col id="15" src="5" match_table_col="13" />
-					</view_src>
-					<view_src id="6" view="3" name="user_profile" match_table="3">
-						<view_src_col id="16" src="6" match_table_col="14" />
-						<view_src_col id="17" src="6" match_table_col="15" />
-						<view_src_col id="18" src="6" match_table_col="16" />
-						<view_src_col id="19" src="6" match_table_col="17" />
-						<view_src_col id="20" src="6" match_table_col="18" />
-						<view_src_col id="21" src="6" match_table_col="19" />
-						<view_src_col id="22" src="6" match_table_col="20" />
-						<view_src_col id="23" src="6" match_table_col="21" />
-						<view_src_col id="24" src="6" match_table_col="22" />
-					</view_src>
-					<view_join id="3" view="3" lhs_src="5" rhs_src="6" join_type="LEFT">
-						<view_join_col id="3" join="3" lhs_src_col="9" rhs_src_col="16" />
-					</view_join>
-					<view_expr id="12" view="3" view_part="RESULT" set_result_col="7" cont_type="SCALAR" valf_src_col="9" />
-					<view_expr id="13" view="3" view_part="RESULT" set_result_col="8" cont_type="SCALAR" valf_src_col="10" />
-					<view_expr id="14" view="3" view_part="RESULT" set_result_col="9" cont_type="SCALAR" valf_src_col="11" />
-					<view_expr id="15" view="3" view_part="RESULT" set_result_col="10" cont_type="SCALAR" valf_src_col="12" />
-					<view_expr id="16" view="3" view_part="RESULT" set_result_col="11" cont_type="SCALAR" valf_src_col="13" />
-					<view_expr id="17" view="3" view_part="RESULT" set_result_col="12" cont_type="SCALAR" valf_src_col="14" />
-					<view_expr id="18" view="3" view_part="RESULT" set_result_col="13" cont_type="SCALAR" valf_src_col="15" />
-					<view_expr id="19" view="3" view_part="RESULT" set_result_col="14" cont_type="SCALAR" valf_src_col="17" />
-					<view_expr id="20" view="3" view_part="RESULT" set_result_col="15" cont_type="SCALAR" valf_src_col="18" />
-					<view_expr id="21" view="3" view_part="RESULT" set_result_col="16" cont_type="SCALAR" valf_src_col="19" />
-					<view_expr id="22" view="3" view_part="RESULT" set_result_col="17" cont_type="SCALAR" valf_src_col="20" />
-					<view_expr id="23" view="3" view_part="RESULT" set_result_col="18" cont_type="SCALAR" valf_src_col="21" />
-					<view_expr id="24" view="3" view_part="RESULT" set_result_col="19" cont_type="SCALAR" valf_src_col="22" />
-					<view_expr id="25" view="3" view_part="RESULT" set_result_col="20" cont_type="SCALAR" valf_src_col="23" />
-					<view_expr id="26" view="3" view_part="RESULT" set_result_col="21" cont_type="SCALAR" valf_src_col="24" />
-					<view_expr id="27" view="3" view_part="WHERE" cont_type="SCALAR" valf_call_sroutine="EQ">
-						<view_expr id="28" p_expr="27" cont_type="SCALAR" valf_src_col="9" />
-					</view_expr>
-				</view>
-				<table id="4" schema="1" name="user_pref">
-					<table_col id="23" table="4" name="user_id" domain="9" mandatory="1" />
-					<table_col id="24" table="4" name="pref_name" domain="26" mandatory="1" />
-					<table_col id="25" table="4" name="pref_value" domain="27" mandatory="0" />
-					<table_ind id="11" table="4" name="primary" ind_type="UNIQUE">
-						<table_ind_col id="11" table_ind="11" table_col="23" />
-						<table_ind_col id="12" table_ind="11" table_col="24" />
-					</table_ind>
-					<table_ind id="12" table="4" name="fk_user" ind_type="FOREIGN" f_table="2">
-						<table_ind_col id="13" table_ind="12" table_col="23" f_table_col="7" />
-					</table_ind>
+				<table id="4" pp_schema="1" name="user_pref" row_data_type="6">
+					<table_field id="12" pp_table="4" row_field="44" mandatory="1" />
+					<table_field id="13" pp_table="4" row_field="45" mandatory="1" />
+					<table_index id="11" pp_table="4" name="primary" index_type="UNIQUE">
+						<table_index_field id="11" pp_table_index="11" field="44" />
+						<table_index_field id="12" pp_table_index="11" field="45" />
+					</table_index>
+					<table_index id="12" pp_table="4" name="fk_user" index_type="FOREIGN" f_table="2">
+						<table_index_field id="13" pp_table_index="12" field="44" f_field="13" />
+					</table_index>
 				</table>
-				<view id="4" schema="1" name="user_theme" view_type="SINGLE" may_write="0">
-					<view_col id="22" view="4" name="theme_name" domain="27" />
-					<view_col id="23" view="4" name="theme_count" domain="9" />
-					<view_src id="7" view="4" name="user_pref" match_table="4">
-						<view_src_col id="25" src="7" match_table_col="24" />
-						<view_src_col id="26" src="7" match_table_col="25" />
-					</view_src>
-					<view_expr id="29" view="4" view_part="RESULT" set_result_col="22" cont_type="SCALAR" valf_src_col="26" />
-					<view_expr id="30" view="4" view_part="RESULT" set_result_col="23" cont_type="SCALAR" valf_call_sroutine="COUNT">
-						<view_expr id="31" p_expr="30" cont_type="SCALAR" valf_src_col="26" />
-					</view_expr>
-					<view_expr id="32" view="4" view_part="WHERE" cont_type="SCALAR" valf_call_sroutine="EQ">
-						<view_expr id="33" p_expr="32" cont_type="SCALAR" valf_src_col="25" />
-						<view_expr id="34" p_expr="32" cont_type="SCALAR" valf_literal="theme" domain="5" />
-					</view_expr>
-					<view_expr id="35" view="4" view_part="GROUP" cont_type="SCALAR" valf_src_col="26" />
-					<view_expr id="36" view="4" view_part="HAVING" cont_type="SCALAR" valf_call_sroutine="GT">
-						<view_expr id="37" p_expr="36" cont_type="SCALAR" valf_call_sroutine="COUNT" />
-						<view_expr id="38" p_expr="36" cont_type="SCALAR" valf_literal="1" domain="9" />
-					</view_expr>
-				</view>
 			</schema>
 		</catalog>
 	</blueprints>
